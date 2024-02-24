@@ -19,21 +19,6 @@ class CameraViewController: UIViewController {
     private var rowRanges: [(start: CGFloat, end: CGFloat)] = []
     private var columnRanges: [(start: CGFloat, end: CGFloat)] = []
     
-    
-    private var board: [[Character]] = [
-        [".", "#", ".", "#", ".", "#", ".", "#"],
-        ["#", ".", "#", ".", "#", ".", "#", "."],
-        [".", "#", ".", "#", ".", "#", ".", "#"],
-        [".", ".", ".", ".", ".", ".", ".", "."],
-        [".", ".", ".", ".", ".", ".", ".", "."],
-        ["@", ".", "@", ".", "@", ".", "@", "."],
-        [".", "@", ".", "@", ".", "@", ".", "@"],
-        ["@", ".", "@", ".", "@", ".", "@", "."]
-    ]
-    
-    private var game: Game = Game(board: board)
-
-    
     private var selectedCheckerPosition: (row: Int, column: Int)?
     private var floatingCheckerView: Checker?
     
@@ -125,7 +110,6 @@ class CameraViewController: UIViewController {
     
     func initializeCheckersGameFrom2DArray() {
         DispatchQueue.main.async {
-            self.chessBoardView.updateBoard(with: self.board)
             self.chessBoardView.deployCheckerOnBoard()
         }
       
@@ -234,12 +218,7 @@ class CameraViewController: UIViewController {
     }
     
     private func isWhiteCheckerAt(row: Int, column: Int) -> Bool {
-        // Ensure the row and column are within the bounds of the board
-        guard row >= 0, row < board.count, column >= 0, column < board[row].count else {
-            return false
-        }
-        // Check if the position has a white checker
-        return board[row][column] == "@"
+        return Game.shared.isWhiteCheckerAt(row: row, col: column)
     }
     
     private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
@@ -255,11 +234,7 @@ class CameraViewController: UIViewController {
     }
     
     private func removeCheckerOnBoard(row: Int, column: Int) {
-        if board[row][column] != "." {
-            board[row][column] = "."
-        }
-        print(board[row][column])
-        self.chessBoardView.updateBoard(with: board)
+        Game.shared.removeCheckerAt(row: row, column: column)
         self.chessBoardView.deployCheckerOnBoard()
     }
     
@@ -287,7 +262,6 @@ class CameraViewController: UIViewController {
                     if isMovableCheckerAt(row: thumbPosition.row, column: thumbPosition.column) {
                         print("[[[Is movable checker]]] + Previous State is possible pinched AND fingers focusing on a cell")
                         removeCheckerOnBoard(row: thumbPosition.row, column: thumbPosition.column)
-                        
                     }
                 }
             }

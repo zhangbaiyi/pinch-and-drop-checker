@@ -8,10 +8,33 @@
 import Foundation
 
 class Game {
-    var board: [[Character]]
     
-    init(board: [[Character]]) {
-        self.board = board
+    static let shared = Game()
+    
+    var board: [[Character]] = [
+        [".", "#", ".", "#", ".", "#", ".", "#"],
+        ["#", ".", "#", ".", "#", ".", "#", "."],
+        [".", "#", ".", "#", ".", "#", ".", "#"],
+        [".", ".", ".", ".", ".", ".", ".", "."],
+        [".", ".", ".", ".", ".", ".", ".", "."],
+        ["@", ".", "@", ".", "@", ".", "@", "."],
+        [".", "@", ".", "@", ".", "@", ".", "@"],
+        ["@", ".", "@", ".", "@", ".", "@", "."]
+    ]
+    
+    private init() {}
+    
+    func removeCheckerAt(row: Int, column: Int) {
+        if board[row][column] != "." {
+            board[row][column] = "."
+        }
+    }
+    
+    func isWhiteCheckerAt(row: Int, col: Int) -> Bool{
+        guard row >= 0, row < board.count, col >= 0, col < board[row].count else {
+            return false
+        }
+        return board[row][col] == "@"
     }
     
     func findMovableCheckers() -> (userMovableCheckers: [[Int]], compMovableCheckers: [[Int]]) {
@@ -43,24 +66,8 @@ class Game {
                 }
             }
         }
+        print(userMovableCheckers)
         
         return (userMovableCheckers, compMovableCheckers)
     }
 }
-
-// Example usage:
-let board: [[Character]] = [
-    [".", "#", ".", "#", ".", "#", ".", "#"],
-    ["#", ".", "#", ".", "#", ".", "#", "."],
-    [".", "#", ".", "#", ".", "#", ".", "#"],
-    [".", ".", ".", ".", ".", ".", ".", "."],
-    [".", ".", ".", ".", ".", ".", ".", "."],
-    ["@", ".", "@", ".", "@", ".", "@", "."],
-    [".", "@", ".", "@", ".", "@", ".", "@"],
-    ["@", ".", "@", ".", "@", ".", "@", "."]
-]
-
-let game = Game(board: board)
-let movableCheckers = game.findMovableCheckers()
-print("User Movable Checkers: \(movableCheckers.userMovableCheckers)")
-print("Computer Movable Checkers: \(movableCheckers.compMovableCheckers)")

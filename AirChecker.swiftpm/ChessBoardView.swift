@@ -2,17 +2,6 @@ import UIKit
 
 class ChessBoardView: UIView {
     
-    private var board: [[Character]] = [
-        [".", "#", ".", "#", ".", "#", ".", "#"],
-        ["#", ".", "#", ".", "#", ".", "#", "."],
-        [".", "#", ".", "#", ".", "#", ".", "#"],
-        [".", ".", ".", ".", ".", ".", ".", "."],
-        [".", ".", ".", ".", ".", ".", ".", "."],
-        ["@", ".", "@", ".", "@", ".", "@", "."],
-        [".", "@", ".", "@", ".", "@", ".", "@"],
-        ["@", ".", "@", ".", "@", ".", "@", "."]
-    ]
-    
     // Initialize the chess board with a specific frame or size
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -48,13 +37,10 @@ class ChessBoardView: UIView {
         self.addSubview(checker)
     }
     
-    func updateBoard(with newBoard: [[Character]]) {
-        self.board = newBoard
-    }
-    
     func deployCheckerOnBoard() {
         removeAllCheckersFromView()
-        for (rowIndex, row) in self.board.enumerated() {
+        let board = Game.shared.board // Use the singleton's board
+        for (rowIndex, row) in board.enumerated() {
             for (columnIndex, cell) in row.enumerated() {
                 switch cell {
                 case "#":
