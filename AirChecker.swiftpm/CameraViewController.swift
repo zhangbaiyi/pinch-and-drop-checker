@@ -27,6 +27,9 @@ class CameraViewController: UIViewController {
     private var cameraView: CameraView { view as! CameraView }
     private var chessBoardView: ChessBoardView!
     
+    private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
+    
+    
     override func loadView() {
         view = CameraView()
     }
@@ -197,7 +200,6 @@ class CameraViewController: UIViewController {
         return Game.shared.isWhiteCheckerAt(row: row, col: column)
     }
     
-    private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
     
     private func isMovableCheckerAt(row: Int, column: Int) -> Bool {
         for checker in movableCheckers {
@@ -225,7 +227,7 @@ class CameraViewController: UIViewController {
     private func placeCheckerOnBoard(row: Int, column: Int) {
         Game.shared.placeCheckerAt(row: row, column: column)
         self.chessBoardView.deployCheckerOnBoard()
-
+        
     }
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
@@ -273,7 +275,7 @@ class CameraViewController: UIViewController {
                 isHolding = false
                 print("Previous State is possible apart")
                 let droppedPoint = CGPoint(x: (pointsPair.thumbTip.x + pointsPair.indexTip.x) / 2,
-                                       y: (pointsPair.thumbTip.y + pointsPair.indexTip.y) / 2)
+                                           y: (pointsPair.thumbTip.y + pointsPair.indexTip.y) / 2)
                 if let droppedPosition = self.findPosition(for: droppedPoint) {
                     print("Previous State is possible apart AND droped on a cell")
                     if isPlacableCellAt(row: droppedPosition.row, column: droppedPosition.column) {
