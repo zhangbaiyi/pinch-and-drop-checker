@@ -36,13 +36,4 @@ class Checker: UIView {
 }
 
 // Extension to ChessBoardView to manage checkers
-extension ChessBoardView {
-    func addChecker(at row: Int, column: Int, color: Checker.Color) {
-        let squareSize = self.bounds.width / 8
-        let checkerSize = squareSize * 0.8 // Checkers are slightly smaller than the squares
-        let xOffset = (squareSize - checkerSize) / 2
-        let yOffset = (squareSize - checkerSize) / 2
-        let checker = Checker(color: color, location: CGPoint(x: CGFloat(column) * squareSize + xOffset, y: CGFloat(row) * squareSize + yOffset), size: checkerSize)
-        self.addSubview(checker)
-    }
-}
+

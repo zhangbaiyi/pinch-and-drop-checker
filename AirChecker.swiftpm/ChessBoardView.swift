@@ -2,6 +2,17 @@ import UIKit
 
 class ChessBoardView: UIView {
     
+    private var board: [[Character]] = [
+        [".", "#", ".", "#", ".", "#", ".", "#"],
+        ["#", ".", "#", ".", "#", ".", "#", "."],
+        [".", "#", ".", "#", ".", "#", ".", "#"],
+        [".", ".", ".", ".", ".", ".", ".", "."],
+        [".", ".", ".", ".", ".", ".", ".", "."],
+        ["@", ".", "@", ".", "@", ".", "@", "."],
+        [".", "@", ".", "@", ".", "@", ".", "@"],
+        ["@", ".", "@", ".", "@", ".", "@", "."]
+    ]
+    
     // Initialize the chess board with a specific frame or size
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -18,7 +29,6 @@ class ChessBoardView: UIView {
         for row in 0..<8 {
             for column in 0..<8 {
                 let square = UIView(frame: CGRect(x: CGFloat(column) * squareSize, y: CGFloat(row) * squareSize, width: squareSize, height: squareSize))
-                // Set the backgroundColor with alpha 0.5
                 if (row + column) % 2 == 0 {
                     square.backgroundColor = UIColor.white.withAlphaComponent(0.5)
                 } else {
@@ -29,5 +39,46 @@ class ChessBoardView: UIView {
         }
     }
     
-    // Add methods for managing chess pieces here
+    func addChecker(at row: Int, column: Int, color: Checker.Color) {
+        let squareSize = self.bounds.width / 8
+        let checkerSize = squareSize * 0.8 // Checkers are slightly smaller than the squares
+        let xOffset = (squareSize - checkerSize) / 2
+        let yOffset = (squareSize - checkerSize) / 2
+        let checker = Checker(color: color, location: CGPoint(x: CGFloat(column) * squareSize + xOffset, y: CGFloat(row) * squareSize + yOffset), size: checkerSize)
+        self.addSubview(checker)
+    }
+    
+    func updateBoard(with newBoard: [[Character]]) {
+        self.board = newBoard
+    }
+    
+    func deployCheckerOnBoard() {
+        removeAllCheckersFromView()
+        for (rowIndex, row) in self.board.enumerated() {
+            for (columnIndex, cell) in row.enumerated() {
+                switch cell {
+                case "#":
+                    self.addChecker(at: rowIndex, column: columnIndex, color: .black)
+                case "@":
+                    self.addChecker(at: rowIndex, column: columnIndex, color: .white)
+                default:
+                    continue
+                }
+            }
+        }
+    }
+    
+    
+    func removeAllCheckersFromView() {
+        // Iterate over all subviews of the ChessBoardView
+        self.subviews.forEach { subview in
+            // Check if the subview is an instance of Checker
+            if subview is Checker {
+                // Remove the checker from the superview
+                subview.removeFromSuperview()
+            }
+        }
+    }
+    
+    
 }

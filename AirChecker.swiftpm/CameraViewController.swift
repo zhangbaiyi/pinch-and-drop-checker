@@ -19,6 +19,7 @@ class CameraViewController: UIViewController {
     private var rowRanges: [(start: CGFloat, end: CGFloat)] = []
     private var columnRanges: [(start: CGFloat, end: CGFloat)] = []
     
+    
     private var board: [[Character]] = [
         [".", "#", ".", "#", ".", "#", ".", "#"],
         ["#", ".", "#", ".", "#", ".", "#", "."],
@@ -29,6 +30,10 @@ class CameraViewController: UIViewController {
         [".", "@", ".", "@", ".", "@", ".", "@"],
         ["@", ".", "@", ".", "@", ".", "@", "."]
     ]
+    
+    private var game: Game = Game(board: board)
+
+    
     private var selectedCheckerPosition: (row: Int, column: Int)?
     private var floatingCheckerView: Checker?
     
@@ -119,30 +124,9 @@ class CameraViewController: UIViewController {
 
     
     func initializeCheckersGameFrom2DArray() {
-        let boardInitialState: [[Character]] = [
-            [".", "#", ".", "#", ".", "#", ".", "#"],
-            ["#", ".", "#", ".", "#", ".", "#", "."],
-            [".", "#", ".", "#", ".", "#", ".", "#"],
-            [".", ".", ".", ".", ".", ".", ".", "."],
-            [".", ".", ".", ".", ".", ".", ".", "."],
-            ["@", ".", "@", ".", "@", ".", "@", "."],
-            [".", "@", ".", "@", ".", "@", ".", "@"],
-            ["@", ".", "@", ".", "@", ".", "@", "."]
-        ]
-        
         DispatchQueue.main.async {
-            for (rowIndex, row) in boardInitialState.enumerated() {
-                for (columnIndex, cell) in row.enumerated() {
-                    switch cell {
-                    case "#":
-                        self.chessBoardView.addChecker(at: rowIndex, column: columnIndex, color: .black)
-                    case "@":
-                        self.chessBoardView.addChecker(at: rowIndex, column: columnIndex, color: .white)
-                    default:
-                        continue
-                    }
-                }
-            }
+            self.chessBoardView.updateBoard(with: self.board)
+            self.chessBoardView.deployCheckerOnBoard()
         }
       
     }
@@ -258,9 +242,29 @@ class CameraViewController: UIViewController {
         return board[row][column] == "@"
     }
     
-    private var isPinching: Bool = false
+    private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
     
-    private 
+    private func isMovableCheckerAt(row: Int, column: Int) -> Bool {
+        
+        for checker in movableCheckers {
+            if checker[0] == row && checker[1] == column {
+                return true
+            }
+        }
+        return false
+    }
+    
+    private func removeCheckerOnBoard(row: Int, column: Int) {
+        if board[row][column] != "." {
+            board[row][column] = "."
+        }
+        print(board[row][column])
+        self.chessBoardView.updateBoard(with: board)
+        self.chessBoardView.deployCheckerOnBoard()
+    }
+    
+    private var isPinching: Bool = false
+    private var previousState: HandGestureProcessor.State = .unknown
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
         let pointsPair = gestureProcessor.lastProcessedPointsPair
@@ -274,6 +278,20 @@ class CameraViewController: UIViewController {
             evidenceBuffer.removeAll()
             tipsColor = .green
             isPinching = true
+            if previousState == .possiblePinch {
+                print("Previous State is possible pinched")
+                if let thumbPosition = self.findPosition(for: pointsPair.thumbTip),
+                   let indexPosition = self.findPosition(for: pointsPair.indexTip),
+                   thumbPosition.row == indexPosition.row && thumbPosition.column == indexPosition.column {
+                    print("Previous State is possible pinched AND fingers focusing on a cell")
+                    if isMovableCheckerAt(row: thumbPosition.row, column: thumbPosition.column) {
+                        print("[[[Is movable checker]]] + Previous State is possible pinched AND fingers focusing on a cell")
+                        removeCheckerOnBoard(row: thumbPosition.row, column: thumbPosition.column)
+                        
+                    }
+                }
+            }
+
             if let thumbPosition = self.findPosition(for: pointsPair.thumbTip),
                            let indexPosition = self.findPosition(for: pointsPair.indexTip),
                thumbPosition.row == indexPosition.row && thumbPosition.column == indexPosition.column {
@@ -297,6 +315,7 @@ class CameraViewController: UIViewController {
             tipsColor = .red
         }
         cameraView.showPoints([pointsPair.thumbTip, pointsPair.indexTip], color: tipsColor)
+        previousState = state
     }
     
 
