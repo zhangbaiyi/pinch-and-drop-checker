@@ -3,13 +3,11 @@ import AVFoundation
 import Vision
 
 class CameraViewController: UIViewController {
-
     
     private let videoDataOutputQueue = DispatchQueue(label: "CameraFeedDataOutput", qos: .userInteractive)
     private var cameraFeedSession: AVCaptureSession?
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
     
-
     private var evidenceBuffer = [HandGestureProcessor.PointsPair]()
     private var isFirstSegment = true
     private var lastObservationTimestamp = Date()
@@ -19,41 +17,35 @@ class CameraViewController: UIViewController {
     private var rowRanges: [(start: CGFloat, end: CGFloat)] = []
     private var columnRanges: [(start: CGFloat, end: CGFloat)] = []
     
-    private var selectedCheckerPosition: (row: Int, column: Int)?
+    private var selectedCheckerPosition: (row: Int, column: Int)? //Not sure what to do with this
     private var floatingCheckerView: Checker?
     
     private var isPinching: Bool = false
     private var isHolding: Bool = false
     private var previousState: HandGestureProcessor.State = .unknown
     
+    private var cameraView: CameraView { view as! CameraView }
+    private var chessBoardView: ChessBoardView!
     
     override func loadView() {
         view = CameraView()
     }
-            
-    private var cameraView: CameraView { view as! CameraView }
-    private var chessBoardView: ChessBoardView!
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-
+        
         if chessBoardView == nil { // Ensure it's only set up once
             let boardSize = min(view.bounds.width, view.bounds.height) * 0.8
             chessBoardView = ChessBoardView(frame: CGRect(x:0, y:0, width:boardSize, height:boardSize))
             chessBoardView.center = view.center
             view.addSubview(chessBoardView)
             view.bringSubviewToFront(chessBoardView)
-            calcCoordinates()
-
+            calculateBoardCoordinates()
         }
-        
     }
-
     
     override func viewDidLoad() {
         super.viewDidLoad()
-       
-        
         handPoseRequest.maximumHandCount = 1
         gestureProcessor.didChangeStateClosure = { [weak self] state in
             self?.handleGestureStateChange(state: state)
@@ -64,9 +56,8 @@ class CameraViewController: UIViewController {
         view.addGestureRecognizer(recognizer)
         initializeCheckersGameFrom2DArray()
         createSelectedCheckerView()
-
     }
-
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         do {
@@ -98,35 +89,34 @@ class CameraViewController: UIViewController {
             view.addSubview(checkerView)
         }
     }
-
+    
     
     private func updateSelectedCheckerPosition(midpoint: CGPoint) {
         DispatchQueue.main.async {
             if let checkerView = self.floatingCheckerView {
                 checkerView.center = self.view.convert(midpoint, from: self.cameraView)
-//                checkerView.isHidden = false // Show the checker
             }
         }
     }
-
+    
     
     func initializeCheckersGameFrom2DArray() {
         DispatchQueue.main.async {
             self.chessBoardView.deployCheckerOnBoard()
         }
-      
+        
     }
     
-    private func calcCoordinates() {
+    private func calculateBoardCoordinates() {
         let chessBoardSize = chessBoardView.frame.size.width
         let squareSize = chessBoardSize / 8
-
+        
         rowRanges.removeAll()
         columnRanges.removeAll()
         
         let topLeftCornerX = chessBoardView.center.x - (chessBoardSize / 2)
         let topLeftCornerY = chessBoardView.center.y - (chessBoardSize / 2)
-
+        
         for i in 0..<8 {
             let start = topLeftCornerY + CGFloat(i) * squareSize // For rows
             let end = start + squareSize
@@ -136,11 +126,10 @@ class CameraViewController: UIViewController {
             let columnEnd = columnStart + squareSize
             columnRanges.append((columnStart, columnEnd))
         }
-
+        
     }
     
     func setupAVSession() throws {
-        // Select a front facing camera, make an input.
         guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else {
             throw AppError.captureSessionSetup(reason: "Could not find a front facing camera.")
         }
@@ -153,7 +142,6 @@ class CameraViewController: UIViewController {
         session.beginConfiguration()
         session.sessionPreset = AVCaptureSession.Preset.high
         
-        // Add a video input.
         guard session.canAddInput(deviceInput) else {
             throw AppError.captureSessionSetup(reason: "Could not add video device input to the session")
         }
@@ -171,7 +159,7 @@ class CameraViewController: UIViewController {
         }
         session.commitConfiguration()
         cameraFeedSession = session
-}
+    }
     
     private func findPosition(for point: CGPoint) -> (row: Int, column: Int)? {
         let rowIndex = rowRanges.firstIndex(where: { $0.start <= point.y && point.y < $0.end })
@@ -202,7 +190,7 @@ class CameraViewController: UIViewController {
         
         let thumbPosition = findPosition(for: thumbPointConverted)
         let indexPosition = findPosition(for: indexPointConverted)
-            
+        
         
         gestureProcessor.processPointsPair((thumbPointConverted, indexPointConverted))
     }
@@ -228,7 +216,7 @@ class CameraViewController: UIViewController {
         self.chessBoardView.deployCheckerOnBoard()
     }
     
-
+    
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
         let pointsPair = gestureProcessor.lastProcessedPointsPair
