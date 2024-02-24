@@ -91,7 +91,7 @@ class CameraViewController: UIViewController {
     }
     
     
-    private func updateSelectedCheckerPosition(midpoint: CGPoint) {
+    private func updateFloatingCheckerPosition(midpoint: CGPoint) {
         DispatchQueue.main.async {
             if let checkerView = self.floatingCheckerView {
                 checkerView.center = self.view.convert(midpoint, from: self.cameraView)
@@ -173,9 +173,7 @@ class CameraViewController: UIViewController {
     }
     
     func processPoints(thumbTip: CGPoint?, indexTip: CGPoint?) {
-        // Check that we have both points.
         guard let thumbPoint = thumbTip, let indexPoint = indexTip else {
-            // If there were no observations for more than 2 seconds reset gesture processor.
             if Date().timeIntervalSince(lastObservationTimestamp) > 2 {
                 gestureProcessor.reset()
             }
@@ -202,7 +200,6 @@ class CameraViewController: UIViewController {
     private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
     
     private func isMovableCheckerAt(row: Int, column: Int) -> Bool {
-        
         for checker in movableCheckers {
             if checker[0] == row && checker[1] == column {
                 return true
@@ -216,7 +213,20 @@ class CameraViewController: UIViewController {
         self.chessBoardView.deployCheckerOnBoard()
     }
     
+    private func isPlacableCellAt(row: Int, column: Int) -> Bool {
+        //Dummy judge for now:
+        if row == 4 && column == 5{
+            return true
+        }
+        return false
+    }
     
+    
+    private func placeCheckerOnBoard(row: Int, column: Int) {
+        Game.shared.placeCheckerAt(row: row, column: column)
+        self.chessBoardView.deployCheckerOnBoard()
+
+    }
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
         let pointsPair = gestureProcessor.lastProcessedPointsPair
@@ -254,13 +264,30 @@ class CameraViewController: UIViewController {
                 if isPinching && isHolding {
                     let midpoint = CGPoint(x: (pointsPair.thumbTip.x + pointsPair.indexTip.x) / 2,
                                            y: (pointsPair.thumbTip.y + pointsPair.indexTip.y) / 2)
-                    self.updateSelectedCheckerPosition(midpoint: midpoint)
+                    self.updateFloatingCheckerPosition(midpoint: midpoint)
                     
                 }
             }
         case .apart, .unknown:
             if previousState == .possibleApart {
                 isHolding = false
+                print("Previous State is possible apart")
+                let droppedPoint = CGPoint(x: (pointsPair.thumbTip.x + pointsPair.indexTip.x) / 2,
+                                       y: (pointsPair.thumbTip.y + pointsPair.indexTip.y) / 2)
+                if let droppedPosition = self.findPosition(for: droppedPoint) {
+                    print("Previous State is possible apart AND droped on a cell")
+                    if isPlacableCellAt(row: droppedPosition.row, column: droppedPosition.column) {
+                        print("[[[Droppable Place]]]Previous State is possible apart AND droped on a cell")
+                        placeCheckerOnBoard(row: droppedPosition.row, column: droppedPosition.column)
+                    }
+                    else{
+                        guard (selectedCheckerPosition != nil) else {
+                            return
+                        }
+                        placeCheckerOnBoard(row: selectedCheckerPosition!.row, column: selectedCheckerPosition!.column)
+                    }
+                    self.floatingCheckerView?.isHidden = true
+                }
             }
             evidenceBuffer.removeAll()
             isPinching = false

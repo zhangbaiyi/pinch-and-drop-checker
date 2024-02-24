@@ -30,6 +30,12 @@ class Game {
         }
     }
     
+    func placeCheckerAt(row: Int, column: Int) {
+        if board[row][column] == "." {
+            board[row][column] = "@"
+        }
+    }
+    
     func isWhiteCheckerAt(row: Int, col: Int) -> Bool{
         guard row >= 0, row < board.count, col >= 0, col < board[row].count else {
             return false
