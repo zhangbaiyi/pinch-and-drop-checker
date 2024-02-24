@@ -22,6 +22,10 @@ class CameraViewController: UIViewController {
     private var selectedCheckerPosition: (row: Int, column: Int)?
     private var floatingCheckerView: Checker?
     
+    private var isPinching: Bool = false
+    private var isHolding: Bool = false
+    private var previousState: HandGestureProcessor.State = .unknown
+    
     
     override func loadView() {
         view = CameraView()
@@ -51,11 +55,9 @@ class CameraViewController: UIViewController {
        
         
         handPoseRequest.maximumHandCount = 1
-        // Add state change handler to hand gesture processor.
         gestureProcessor.didChangeStateClosure = { [weak self] state in
             self?.handleGestureStateChange(state: state)
         }
-        // Add double tap gesture recognizer for clearing the draw path.
         let recognizer = UITapGestureRecognizer(target: self, action: #selector(handleGesture(_:)))
         recognizer.numberOfTouchesRequired = 1
         recognizer.numberOfTapsRequired = 2
@@ -86,11 +88,11 @@ class CameraViewController: UIViewController {
     
     private func createSelectedCheckerView() {
         let size: CGFloat = 80
-        let initialLocation = CGPoint(x: 0, y: 0) // Adjust as needed
+        let initialLocation = CGPoint(x: 0, y: 0)
         
         floatingCheckerView = Checker(color: .white, location: initialLocation, size: size)
-        floatingCheckerView?.setSelected(true)  // This should now work as expected
-        floatingCheckerView?.isHidden = true     // Start hidden
+        floatingCheckerView?.setSelected(true)
+        floatingCheckerView?.isHidden = true
         
         if let checkerView = floatingCheckerView {
             view.addSubview(checkerView)
@@ -102,7 +104,7 @@ class CameraViewController: UIViewController {
         DispatchQueue.main.async {
             if let checkerView = self.floatingCheckerView {
                 checkerView.center = self.view.convert(midpoint, from: self.cameraView)
-                checkerView.isHidden = false // Show the checker
+//                checkerView.isHidden = false // Show the checker
             }
         }
     }
@@ -116,8 +118,8 @@ class CameraViewController: UIViewController {
     }
     
     private func calcCoordinates() {
-        let chessBoardSize = chessBoardView.frame.size.width // Assuming square board for simplicity
-        let squareSize = chessBoardSize / 8 // Size of each square
+        let chessBoardSize = chessBoardView.frame.size.width
+        let squareSize = chessBoardSize / 8
 
         rowRanges.removeAll()
         columnRanges.removeAll()
@@ -178,7 +180,7 @@ class CameraViewController: UIViewController {
         if let rowIndex = rowIndex, let columnIndex = columnIndex {
             return (row: rowIndex, column: columnIndex)
         } else {
-            return nil // Point is not within any row and column
+            return nil
         }
     }
     
@@ -202,19 +204,7 @@ class CameraViewController: UIViewController {
         let indexPosition = findPosition(for: indexPointConverted)
             
         
-        // Process new points
         gestureProcessor.processPointsPair((thumbPointConverted, indexPointConverted))
-        
-//        if let thumbPosition = thumbPosition, let indexPosition = indexPosition,
-//           thumbPosition.row == indexPosition.row && thumbPosition.column == indexPosition.column {
-//            // Check if the position has a white checker
-//            if isWhiteCheckerAt(row: thumbPosition.row, column: thumbPosition.column) {
-//                // Select the checker
-//                selectedCheckerPosition = (row: thumbPosition.row, column: thumbPosition.column)
-//                print("Selected checker at row: \(thumbPosition.row), column: \(thumbPosition.column)")
-//            }
-//        }
-        
     }
     
     private func isWhiteCheckerAt(row: Int, column: Int) -> Bool {
@@ -238,8 +228,7 @@ class CameraViewController: UIViewController {
         self.chessBoardView.deployCheckerOnBoard()
     }
     
-    private var isPinching: Bool = false
-    private var previousState: HandGestureProcessor.State = .unknown
+
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
         let pointsPair = gestureProcessor.lastProcessedPointsPair
@@ -249,6 +238,7 @@ class CameraViewController: UIViewController {
             evidenceBuffer.append(pointsPair)
             tipsColor = .orange
             isPinching = false
+            isHolding = false
         case .pinched:
             evidenceBuffer.removeAll()
             tipsColor = .green
@@ -262,28 +252,28 @@ class CameraViewController: UIViewController {
                     if isMovableCheckerAt(row: thumbPosition.row, column: thumbPosition.column) {
                         print("[[[Is movable checker]]] + Previous State is possible pinched AND fingers focusing on a cell")
                         removeCheckerOnBoard(row: thumbPosition.row, column: thumbPosition.column)
+                        isHolding = true
+                        self.selectedCheckerPosition = (row: thumbPosition.row, column: thumbPosition.column)
+                        print("Selected checker at row: \(thumbPosition.row), column: \(thumbPosition.column)")
+                        self.floatingCheckerView?.isHidden = false
                     }
                 }
             }
-
+            
             if let thumbPosition = self.findPosition(for: pointsPair.thumbTip),
-                           let indexPosition = self.findPosition(for: pointsPair.indexTip),
+               let indexPosition = self.findPosition(for: pointsPair.indexTip),
                thumbPosition.row == indexPosition.row && thumbPosition.column == indexPosition.column {
-                if isWhiteCheckerAt(row: thumbPosition.row, column: thumbPosition.column) {
-                    // Select the checker
-                    self.selectedCheckerPosition = (row: thumbPosition.row, column: thumbPosition.column)
-                    print("Selected checker at row: \(thumbPosition.row), column: \(thumbPosition.column)")
-                    self.floatingCheckerView?.isHidden = false
-                    
-                }
-                if isPinching { let midpoint = CGPoint(x: (pointsPair.thumbTip.x + pointsPair.indexTip.x) / 2,
-                                                       y: (pointsPair.thumbTip.y + pointsPair.indexTip.y) / 2)
+                if isPinching && isHolding {
+                    let midpoint = CGPoint(x: (pointsPair.thumbTip.x + pointsPair.indexTip.x) / 2,
+                                           y: (pointsPair.thumbTip.y + pointsPair.indexTip.y) / 2)
                     self.updateSelectedCheckerPosition(midpoint: midpoint)
                     
                 }
             }
         case .apart, .unknown:
-            // We have enough evidence to not draw. Discard any evidence buffer points.
+            if previousState == .possibleApart {
+                isHolding = false
+            }
             evidenceBuffer.removeAll()
             isPinching = false
             tipsColor = .red
@@ -291,8 +281,6 @@ class CameraViewController: UIViewController {
         cameraView.showPoints([pointsPair.thumbTip, pointsPair.indexTip], color: tipsColor)
         previousState = state
     }
-    
-
     
     @IBAction func handleGesture(_ gesture: UITapGestureRecognizer) {
         guard gesture.state == .ended else {
@@ -315,25 +303,18 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         
         let handler = VNImageRequestHandler(cmSampleBuffer: sampleBuffer, orientation: .up, options: [:])
         do {
-            // Perform VNDetectHumanHandPoseRequest
             try handler.perform([handPoseRequest])
-            // Continue only when a hand was detected in the frame.
-            // Since we set the maximumHandCount property of the request to 1, there will be at most one observation.
             guard let observation = handPoseRequest.results?.first else {
                 return
             }
-            // Get points for thumb and index finger.
             let thumbPoints = try observation.recognizedPoints(.thumb)
             let indexFingerPoints = try observation.recognizedPoints(.indexFinger)
-            // Look for tip points.
             guard let thumbTipPoint = thumbPoints[.thumbTip], let indexTipPoint = indexFingerPoints[.indexTip] else {
                 return
             }
-            // Ignore low confidence points.
             guard thumbTipPoint.confidence > 0.3 && indexTipPoint.confidence > 0.3 else {
                 return
             }
-            // Convert points from Vision coordinates to AVFoundation coordinates.
             thumbTip = CGPoint(x: thumbTipPoint.location.x, y: 1 - thumbTipPoint.location.y)
             indexTip = CGPoint(x: indexTipPoint.location.x, y: 1 - indexTipPoint.location.y)
         } catch {
