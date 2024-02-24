@@ -238,7 +238,6 @@ class CameraViewController: UIViewController {
             evidenceBuffer.append(pointsPair)
             tipsColor = .orange
             isPinching = false
-            isHolding = false
         case .pinched:
             evidenceBuffer.removeAll()
             tipsColor = .green
@@ -272,27 +271,34 @@ class CameraViewController: UIViewController {
             }
         case .apart, .unknown:
             if previousState == .possibleApart {
-                isHolding = false
                 print("Previous State is possible apart")
-                let droppedPoint = CGPoint(x: (pointsPair.thumbTip.x + pointsPair.indexTip.x) / 2,
-                                           y: (pointsPair.thumbTip.y + pointsPair.indexTip.y) / 2)
-                if let droppedPosition = self.findPosition(for: droppedPoint) {
-                    print("Previous State is possible apart AND droped on a cell")
-                    if isPlacableCellAt(row: droppedPosition.row, column: droppedPosition.column) {
-                        print("[[[Droppable Place]]]Previous State is possible apart AND droped on a cell")
-                        placeCheckerOnBoard(row: droppedPosition.row, column: droppedPosition.column)
-                    }
-                    else{
-                        guard (selectedCheckerPosition != nil) else {
-                            return
+                
+                print("State")
+                print(isHolding)
+                print(isPinching)
+                if isHolding {
+                    let droppedPoint = CGPoint(x: (pointsPair.thumbTip.x + pointsPair.indexTip.x) / 2,
+                                               y: (pointsPair.thumbTip.y + pointsPair.indexTip.y) / 2)
+                    if let droppedPosition = self.findPosition(for: droppedPoint) {
+                        print("Previous State is possible apart AND droped on a cell")
+                        if isPlacableCellAt(row: droppedPosition.row, column: droppedPosition.column) {
+                            print("[[[Droppable Place]]]Previous State is possible apart AND droped on a cell")
+                            placeCheckerOnBoard(row: droppedPosition.row, column: droppedPosition.column)
                         }
-                        placeCheckerOnBoard(row: selectedCheckerPosition!.row, column: selectedCheckerPosition!.column)
+                        else{
+                            guard (selectedCheckerPosition != nil) else {
+                                return
+                            }
+                            placeCheckerOnBoard(row: selectedCheckerPosition!.row, column: selectedCheckerPosition!.column)
+                        }
+                        self.floatingCheckerView?.isHidden = true
                     }
-                    self.floatingCheckerView?.isHidden = true
                 }
+
             }
             evidenceBuffer.removeAll()
             isPinching = false
+            isHolding = false
             tipsColor = .red
         }
         cameraView.showPoints([pointsPair.thumbTip, pointsPair.indexTip], color: tipsColor)
