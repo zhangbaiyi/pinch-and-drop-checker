@@ -62,19 +62,77 @@ class Game {
         board[selected!.row][selected!.col] = selectedKind!
     }
     
-    func placeCheckerAt(row: Int, column: Int) {
-        if board[row][column] == "." {
-            board[row][column] = "@"
+    func calculateDistance(from: Coordinate, to: Coordinate) -> Int {
+        abs(to.row - from.row) + abs(to.col - from.col)
+    }
+    
+    func findWayToDestination(start: Coordinate, end: Coordinate) -> Set<Coordinate> {
+        var res: Set<Coordinate> = []
+        let directions = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
+        
+        func findCaptures(from coordinate: Coordinate, visited: inout Set<Coordinate>, currentPath: inout Set<Coordinate>) -> Bool {
+            if coordinate.row == end.row && coordinate.col == end.col {
+                res = currentPath // Found a path to the destination
+                return true
+            }
+            
+            for (dRow, dCol) in directions {
+                let jumpRow = coordinate.row + 2*dRow
+                let jumpCol = coordinate.col + 2*dCol
+                
+                if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, !visited.contains(Coordinate(row: jumpRow, col: jumpCol)) {
+                    if board[coordinate.row + dRow][coordinate.col + dCol] == "#" && board[jumpRow][jumpCol] == "." {
+                        let newCoordinate = Coordinate(row: jumpRow, col: jumpCol)
+                        visited.insert(newCoordinate)
+                        let capturedCoordinate = Coordinate(row: coordinate.row + dRow, col: coordinate.col + dCol)
+                        currentPath.insert(capturedCoordinate)
+                        if findCaptures(from: newCoordinate, visited: &visited, currentPath: &currentPath) {
+                            return true // Path to the end found, no need to explore further
+                        }
+                        currentPath.remove(capturedCoordinate) // Backtrack: remove the captured checker if it doesn't lead to the end
+                    }
+                }
+            }
+            return false // No valid jump found from this coordinate
         }
+        
+        var visited: Set<Coordinate> = [start]
+        var currentPath: Set<Coordinate> = []
+        _ = findCaptures(from: start, visited: &visited, currentPath: &currentPath)
+        return res
+    }
+    
+    func placeCheckerAt(row: Int, column: Int) {
+  
         guard Game.shared.selected != nil else {
             return
         }
         let start = Game.shared.selected
         let end = Coordinate(row: row, col: column)
         Game.shared.placedChecker(from: Game.shared.selected!, to: end)
+        let blacks = findWayToDestination(start: Game.shared.selected!, end: end)
+        if board[row][column] == "." {
+            board[row][column] = "@"
+        }
         Game.shared.selected = nil
         Game.shared.selectedKind = nil
     }
+    
+    func placedChecker(from: Coordinate, to: Coordinate) {
+        //todo: update chessboard
+        //1. eat black checkers if any
+        //2. call function blackCheckerMove()
+        let isJump = abs(from.row - to.row) == 2 && abs(from.col - to.col) == 2
+        if isJump {
+            let middleRow = (from.row + to.row) / 2
+            let middleCol = (from.col + to.col) / 2
+            if board[middleRow][middleCol] == "#" {
+                board[middleRow][middleCol] = "."
+            }
+        }
+        computerMove()
+    }
+    
     
     func isWhiteCheckerAt(row: Int, col: Int) -> Bool{
         guard row >= 0, row < board.count, col >= 0, col < board[row].count else {
@@ -193,21 +251,7 @@ class Game {
         return jumpers.isEmpty ? movable : jumpers
     }
     
-    func placedChecker(from: Coordinate, to: Coordinate) {
-        //todo: update chessboard
-        //1. eat black checkers if any
-        //2. call function blackCheckerMove()
-        let isJump = abs(from.row - to.row) == 2 && abs(from.col - to.col) == 2
-        if isJump {
-            let middleRow = (from.row + to.row) / 2
-            let middleCol = (from.col + to.col) / 2
-            if board[middleRow][middleCol] == "#" {
-                board[middleRow][middleCol] = "."
-            }
-        }
-        computerMove()
-    }
-    
+
     func computerMove() {
         let movableCheckers = findMovableCheckersForBlack()
         var possibleMoves: [(from: Coordinate, to: Coordinate)] = []
