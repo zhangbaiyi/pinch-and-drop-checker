@@ -235,7 +235,13 @@ class CameraViewController: UIViewController {
     private func placeCheckerOnBoard(row: Int, column: Int) {
         Game.shared.placeCheckerAt(row: row, column: column)
         self.chessBoardView.deployCheckerOnBoard()
-        
+        guard selectedCheckerPosition != nil else {
+            return
+        }
+        let start = Coordinate(row: selectedCheckerPosition!.row, col: selectedCheckerPosition!.column)
+        let end = Coordinate(row: row, col: column)
+        Game.shared.placedChecker(from: start, to: end)
+        self.chessBoardView.deployCheckerOnBoard()
     }
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {

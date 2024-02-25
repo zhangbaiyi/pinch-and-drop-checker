@@ -94,4 +94,76 @@ class Game {
         return movable
     }
     
+    func placedChecker(from: Coordinate, to: Coordinate) {
+        //todo: update chessboard
+        //1. eat black checkers if any
+        //2. call function blackCheckerMove()
+        let isJump = abs(from.row - to.row) == 2 && abs(from.col - to.col) == 2
+        if isJump {
+            let middleRow = (from.row + to.row) / 2
+            let middleCol = (from.col + to.col) / 2
+            if board[middleRow][middleCol] == "#" {
+                board[middleRow][middleCol] = "."
+            }
+        }
+        computerMove()
+    }
+    
+    func computerMove() {
+        var possibleMoves: [(from: Coordinate, to: Coordinate)] = []
+                for row in 0..<board.count {
+            for col in 0..<board[row].count where board[row][col] == "#" {
+                let possibleDropPoints = possibleDropPointForBlack(row: row, col: col)
+                for dropPoint in possibleDropPoints {
+                    possibleMoves.append((from: Coordinate(row: row, col: col), to: dropPoint))
+                }
+            }
+        }
+        
+        if let randomMove = possibleMoves.randomElement() {
+            performMove(from: randomMove.from, to: randomMove.to)
+        }
+    }
+    
+    private func possibleDropPointForBlack(row: Int, col: Int) -> Set<Coordinate> {
+        var places: Set<Coordinate> = []
+        let directions = [(1, -1), (1, 1), (-1, -1), (-1, 1)] // All directions for movement
+        
+        for (dRow, dCol) in directions {
+            let jumpRow = row + 2 * dRow
+            let jumpCol = col + 2 * dCol
+            if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count {
+                if board[row + dRow][col + dCol] == "@" && board[jumpRow][jumpCol] == "." {
+                    places.insert(Coordinate(row: jumpRow, col: jumpCol))
+                }
+            }
+        }
+        
+        if places.isEmpty {
+            for (dRow, dCol) in directions {
+                let newRow = row + dRow
+                let newCol = col + dCol
+                if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
+                    places.insert(Coordinate(row: newRow, col: newCol))
+                }
+            }
+        }
+        
+        return places
+    }
+    
+    private func performMove(from: Coordinate, to: Coordinate) {
+        // Remove the checker from the original position
+        board[from.row][from.col] = "."
+        // Place the checker in the new position
+        board[to.row][to.col] = "#"
+        // If the move was a jump, remove the jumped checker
+        let isJump = abs(from.row - to.row) == 2 && abs(from.col - to.col) == 2
+        if isJump {
+            let middleRow = (from.row + to.row) / 2
+            let middleCol = (from.col + to.col) / 2
+            board[middleRow][middleCol] = "."
+        }
+    }
+    
 }
