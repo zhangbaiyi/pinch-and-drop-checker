@@ -1,8 +1,6 @@
 import UIKit
 
 class ChessBoardView: UIView {
-    
-    // Initialize the chess board with a specific frame or size
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupBoard()
@@ -56,15 +54,10 @@ class ChessBoardView: UIView {
     
     
     func removeAllCheckersFromView() {
-        // Iterate over all subviews of the ChessBoardView
         self.subviews.forEach { subview in
-            // Check if the subview is an instance of Checker
             if subview is Checker {
-                // Remove the checker from the superview
                 subview.removeFromSuperview()
             }
         }
     }
-    
-    
 }
