@@ -28,7 +28,7 @@ class ChessBoardView: UIView {
     
     func addChecker(at row: Int, column: Int, color: Checker.Color) {
         let squareSize = self.bounds.width / 8
-        let checkerSize = squareSize * 0.8 // Checkers are slightly smaller than the squares
+        let checkerSize = squareSize * 0.8
         let xOffset = (squareSize - checkerSize) / 2
         let yOffset = (squareSize - checkerSize) / 2
         let checker = Checker(color: color, location: CGPoint(x: CGFloat(column) * squareSize + xOffset, y: CGFloat(row) * squareSize + yOffset), size: checkerSize)
@@ -48,34 +48,29 @@ class ChessBoardView: UIView {
     func deployCheckerOnBoard() {
         removeAllCheckersFromView()
         removeGlowingCircleHintsFromView()
-        let board = Game.shared.board // Use the singleton's board
+        let board = Game.shared.board
         print("Holding piece? ", Game.shared.state)
-
+        
         for (rowIndex, row) in board.enumerated() {
             for (columnIndex, cell) in row.enumerated() {
                 switch cell {
                 case "#", "@":
                     let checkerColor: Checker.Color = cell == "#" ? .black : .white
                     self.addChecker(at: rowIndex, column: columnIndex, color: checkerColor)
-                    
-                    // Check if this checker is movable
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
                     
                     if Game.shared.state == .choice {
                         let movableCheckers = Game.shared.findMovableCheckers()
                         if movableCheckers.contains(coordinate) {
-                            // Add a glow effect to the checker
                             addGlowEffect(toCheckerAt: rowIndex, column: columnIndex)
                         }
                     }
-                
+                    
                 case ".":
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
-
+                    
                     if Game.shared.state == .hint {
                         let possiblePlaces = Game.shared.findPossibleMoveDestination()
-
-//                        let possiblePlaces = Game.shared.possibleDropPoint()
                         if possiblePlaces.contains(coordinate) {
                             addGlowingCircle(at: rowIndex, column: columnIndex)
                         }
@@ -89,14 +84,13 @@ class ChessBoardView: UIView {
     }
 
     private func addGlowEffect(toCheckerAt row: Int, column: Int) {
-        // Assuming you have a way to get the specific checker view, e.g., via a tag or storing references
         guard let checker = self.subviews.first(where: { $0 is Checker && $0.tag == (row * 8 + column) }) as? Checker else {
             return
         }
         
         checker.layer.shadowColor = UIColor.yellow.cgColor // Choose appropriate glow color
         checker.layer.shadowOpacity = 0.8
-        checker.layer.shadowRadius = 10 // Adjust for desired glow effect
+        checker.layer.shadowRadius = 10
         checker.layer.shadowOffset = CGSize(width: 0, height: 0)
     }
     
@@ -107,7 +101,7 @@ class ChessBoardView: UIView {
         let yOffset = (squareSize - circleSize) / 2
         let circleFrame = CGRect(x: CGFloat(column) * squareSize + xOffset, y: CGFloat(row) * squareSize + yOffset, width: circleSize, height: circleSize)
         
-        let circleView = Circle(frame: circleFrame) // Use the Circle class
+        let circleView = Circle(frame: circleFrame)
         self.addSubview(circleView)
     }
     

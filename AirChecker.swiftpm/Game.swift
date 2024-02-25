@@ -13,24 +13,17 @@ class Game {
     
     var state: GameState = .choice
     
-    var board: [[Character]] = [[".", ".", ".", "#", ".", "#", ".", "."],
-                               ["#", ".", "#", ".", "#", ".", ".", "."],
-                               [".", "#", ".", ".", ".", "#", ".", "#"],
-                               [".", ".", "#", ".", "#", ".", "@", "."],
-                               [".", ".", ".", ".", ".", "@", ".", "."],
-                               ["@", ".", "@", ".", ".", ".", ".", "."],
-                               [".", "@", ".", ".", ".", "@", ".", "@"],
-                               ["@", ".", "@", ".", ".", ".", ".", "."]]
-//    [
-//        [".", "#", ".", "#", ".", "#", ".", "#"],
-//        ["#", ".", "#", ".", "#", ".", "#", "."],
-//        [".", "#", ".", "#", ".", "#", ".", "#"],
-//        [".", ".", ".", ".", ".", ".", ".", "."],
-//        [".", ".", ".", ".", ".", ".", ".", "."],
-//        ["@", ".", "@", ".", "@", ".", "@", "."],
-//        [".", "@", ".", "@", ".", "@", ".", "@"],
-//        ["@", ".", "@", ".", "@", ".", "@", "."]
-//    ]
+    var board: [[Character]] =
+    [
+        [".", "#", ".", "#", ".", "#", ".", "#"],
+        ["#", ".", "#", ".", "#", ".", "#", "."],
+        [".", "#", ".", "#", ".", "#", ".", "#"],
+        [".", ".", ".", ".", ".", ".", ".", "."],
+        [".", ".", ".", ".", ".", ".", ".", "."],
+        ["@", ".", "@", ".", "@", ".", "@", "."],
+        [".", "@", ".", "@", ".", "@", ".", "@"],
+        ["@", ".", "@", ".", "@", ".", "@", "."]
+    ]
     
     var selected: Coordinate? = nil
     var selectedKind: Character? = nil
@@ -56,7 +49,6 @@ class Game {
             return
         }
         guard selectedKind != nil else {
-            print("selected kind is nil")
             return
         }
         board[selected!.row][selected!.col] = selectedKind!
@@ -65,8 +57,6 @@ class Game {
     func calculateDistance(from: Coordinate, to: Coordinate) -> Int {
         abs(to.row - from.row) + abs(to.col - from.col)
     }
-    
-
     
     func placeCheckerAt(row: Int, column: Int) {
   
@@ -212,11 +202,8 @@ class Game {
         for i in 0..<board.count {
             for j in 0..<board[i].count {
                 if board[i][j] == "@" {
-                    if i == 1 {
-                        print("Stop")
-                    }
                     let currentCoordinate = Coordinate(row: i, col: j)
-                    for direction in direction_normal {
+                    for direction in directions {
                         let jumpRow = i + 2 * direction.0
                         let jumpCol = j + 2 * direction.1
                         let middleRow = i + direction.0
@@ -227,9 +214,16 @@ class Game {
                            board[middleRow][middleCol] == "#", board[jumpRow][jumpCol] == "." {
                             jumpers.insert(currentCoordinate)
                         }
-                        
-                        // Check for simple moves if no jumpers found yet
-                        if jumpers.isEmpty {
+                    }
+                }
+            }
+        }
+        if jumpers.isEmpty {
+            for i in 0..<board.count {
+                for j in 0..<board[i].count {
+                    if board[i][j] == "@" {
+                        let currentCoordinate = Coordinate(row: i, col: j)
+                        for direction in direction_normal {
                             let moveRow = i + direction.0
                             let moveCol = j + direction.1
                             if moveRow >= 0, moveRow < board.count, moveCol >= 0, moveCol < board[moveRow].count,
@@ -241,8 +235,6 @@ class Game {
                 }
             }
         }
-        
-        // Priority to jumpers if available
         return jumpers.isEmpty ? movable : jumpers
     }
     
@@ -250,48 +242,181 @@ class Game {
     func computerMove() {
         let movableCheckers = findMovableCheckersForBlack()
         var possibleMoves: [(from: Coordinate, to: Coordinate)] = []
-
-        // Prioritize captures
-        for checker in movableCheckers {
-            let possibleDropPoints = possibleDropPointForBlack(row: checker.row, col: checker.col, prioritizeCapture: true)
-            for dropPoint in possibleDropPoints {
-                possibleMoves.append((from: checker, to: dropPoint))
-            }
+        
+        let randomSelect = movableCheckers.randomElement()
+        guard randomSelect != nil else {
+            return
         }
-
-        // If no captures, add simple moves
-        if possibleMoves.isEmpty {
-            for checker in movableCheckers {
-                let possibleDropPoints = possibleDropPointForBlack(row: checker.row, col: checker.col, prioritizeCapture: false)
-                for dropPoint in possibleDropPoints {
-                    possibleMoves.append((from: checker, to: dropPoint))
+        print("selected black move")
+        print(randomSelect)
+        print("Possible destinations for random seleced")
+        let possiblePlaces = findPossibleMoveDestinationForComp(pick: randomSelect!)
+        let des = possiblePlaces.randomElement()
+        print(des)
+        guard des != nil else {
+            return
+        }
+        let captures = findWayToDestinationForComp(start: randomSelect!, end: des!)
+        print(captures)
+        
+        if !captures.isEmpty {
+            for coordinate in captures {
+                if board[coordinate.row][coordinate.col] == "@" {
+                    board[coordinate.row][coordinate.col] = "."
                 }
             }
         }
-
-        // Randomly choose a move from the list of possible moves
-        if let randomMove = possibleMoves.randomElement() {
-            performMove(from: randomMove.from, to: randomMove.to)
-        }
+        
+        board[randomSelect!.row][randomSelect!.col] = "."
+        board[des!.row][des!.col] = "#"
     }
-
+    
     private func findMovableCheckersForBlack() -> Set<Coordinate> {
         var movable: Set<Coordinate> = []
-        for row in 0..<board.count {
-            for col in 0..<board[row].count where board[row][col] == "#" {
-                if !possibleDropPointForBlack(row: row, col: col, prioritizeCapture: true).isEmpty || !possibleDropPointForBlack(row: row, col: col, prioritizeCapture: false).isEmpty {
-                    movable.insert(Coordinate(row: row, col: col))
+        var jumpers: Set<Coordinate> = []
+        let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)] // Directions for jumps and moves
+        let direction_normal = [(1, -1), (1, 1)]
+        let direction_king = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+        
+        
+        for i in 0..<board.count {
+            for j in 0..<board[i].count {
+                if board[i][j] == "#" {
+                    let currentCoordinate = Coordinate(row: i, col: j)
+                    for direction in directions {
+                        let jumpRow = i + 2 * direction.0
+                        let jumpCol = j + 2 * direction.1
+                        let middleRow = i + direction.0
+                        let middleCol = j + direction.1
+                        if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count,
+                           board[middleRow][middleCol] == "@", board[jumpRow][jumpCol] == "." {
+                            jumpers.insert(currentCoordinate)
+                        }
+                    }
                 }
             }
         }
-        return movable
+        
+        if jumpers.isEmpty {
+            for i in 0..<board.count {
+                for j in 0..<board[i].count {
+                    if board[i][j] == "#" {
+                        for direction in direction_normal {
+                            let currentCoordinate = Coordinate(row: i, col: j)
+                            let moveRow = i + 1 * direction.0
+                            let moveCol = j + 1 * direction.1
+                            if moveRow >= 0, moveRow < board.count, moveCol >= 0, moveCol < board[moveRow].count,
+                               board[moveRow][moveCol] == "." {
+                                movable.insert(currentCoordinate)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return jumpers.isEmpty ? movable : jumpers
     }
 
+    private func findPossibleMoveDestinationForComp(pick: Coordinate) -> Set<Coordinate> {
+        let r = pick.row
+        let c = pick.col
+        var places: Set<Coordinate> = []
+        
+        let simpleMoveDirections = [(1, -1), (1, 1)]
+        
+        func calculateTotalDistance(from start: Coordinate, to end: Coordinate, currentDistance: Int) -> Int {
+            return currentDistance + abs(end.row - start.row) + abs(end.col - start.col)
+        }
+        
+        var localPlaces: Set<Coordinate> = []
+        var visited: Set<Coordinate> = [Coordinate(row: r, col: c)]
+        
+        func findAllJumps(from coordinate: Coordinate, visited: inout Set<Coordinate>, totalDistance: Int, furthestDistance: inout Int) -> Set<Coordinate> {
+            print(localPlaces)
+            print(visited)
+            let directions = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
+            
+            for (dRow, dCol) in directions {
+                let jumpRow = coordinate.row + 2*dRow
+                let jumpCol = coordinate.col + 2*dCol
+                
+                if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, !visited.contains(Coordinate(row: jumpRow, col: jumpCol)) {
+                    if board[coordinate.row + dRow][coordinate.col + dCol] == "@" && board[jumpRow][jumpCol] == "." {
+                        let newCoordinate = Coordinate(row: jumpRow, col: jumpCol)
+                        visited.insert(newCoordinate)
+                        
+                        let currentTotalDistance = calculateTotalDistance(from: coordinate, to: newCoordinate, currentDistance: totalDistance)
+                        
+                        if currentTotalDistance > furthestDistance {
+                            furthestDistance = currentTotalDistance
+                            localPlaces = [newCoordinate]
+                        } else if currentTotalDistance == furthestDistance {
+                            localPlaces.insert(newCoordinate)
+                        }
+                        
+                        _ = findAllJumps(from: newCoordinate, visited: &visited, totalDistance: currentTotalDistance, furthestDistance: &furthestDistance)
+                    }
+                }
+            }
+            return localPlaces
+        }
+        var furthestDistance = 0
+        places = findAllJumps(from: Coordinate(row: pick.row, col: pick.col), visited: &visited, totalDistance: 0, furthestDistance: &furthestDistance)
+        
+        if places.isEmpty {
+            for (dRow, dCol) in simpleMoveDirections {
+                let newRow = r + dRow
+                let newCol = c + dCol
+                if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
+                    places.insert(Coordinate(row: newRow, col: newCol))
+                }
+            }
+        }
+        
+        return places
+    }
+    
+    func findWayToDestinationForComp(start: Coordinate, end: Coordinate) -> Set<Coordinate> {
+        var res: Set<Coordinate> = []
+        let directions = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
+        
+        func findCaptures(from coordinate: Coordinate, visited: inout Set<Coordinate>, currentPath: inout Set<Coordinate>) -> Bool {
+            if coordinate.row == end.row && coordinate.col == end.col {
+                res = currentPath
+                return true
+            }
+            
+            for (dRow, dCol) in directions {
+                let jumpRow = coordinate.row + 2*dRow
+                let jumpCol = coordinate.col + 2*dCol
+                
+                if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, !visited.contains(Coordinate(row: jumpRow, col: jumpCol)) {
+                    if board[coordinate.row + dRow][coordinate.col + dCol] == "@" && board[jumpRow][jumpCol] == "." {
+                        let newCoordinate = Coordinate(row: jumpRow, col: jumpCol)
+                        visited.insert(newCoordinate)
+                        let capturedCoordinate = Coordinate(row: coordinate.row + dRow, col: coordinate.col + dCol)
+                        currentPath.insert(capturedCoordinate)
+                        if findCaptures(from: newCoordinate, visited: &visited, currentPath: &currentPath) {
+                            return true
+                        }
+                        currentPath.remove(capturedCoordinate) // Backtrack
+                    }
+                }
+            }
+            return false
+        }
+        
+        var visited: Set<Coordinate> = [start]
+        var currentPath: Set<Coordinate> = []
+        _ = findCaptures(from: start, visited: &visited, currentPath: &currentPath)
+        return res
+    }
+    
+    
     private func possibleDropPointForBlack(row: Int, col: Int, prioritizeCapture: Bool) -> Set<Coordinate> {
         var places: Set<Coordinate> = []
         let directions = [(1, -1), (1, 1), (-1, -1), (-1, 1)] // All directions for movement
 
-        // First check for jumps if prioritizing captures
         if prioritizeCapture {
             for (dRow, dCol) in directions {
                 let jumpRow = row + 2 * dRow
