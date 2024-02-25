@@ -59,39 +59,55 @@ class Game {
             }
         }
         
-        if !places.isEmpty {
-            return places
-        }
-        
-        for (dRow, dCol) in directions {
-            let newRow = row + dRow
-            let newCol = col + dCol
-            if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
-                places.insert(Coordinate(row: newRow, col: newCol))
+        if places.isEmpty {
+            for (dRow, dCol) in directions {
+                let newRow = row + dRow
+                let newCol = col + dCol
+                if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
+                    places.insert(Coordinate(row: newRow, col: newCol))
+                }
             }
         }
-        print(places)
         return places
     }
     
     func findMovableCheckers() -> Set<Coordinate> {
         var movable: Set<Coordinate> = []
+        var jumpers: Set<Coordinate> = []
+        let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)] // Directions for jumps and moves
+        
         for i in 0..<board.count {
             for j in 0..<board[i].count {
                 if board[i][j] == "@" {
-                    // User's checker, check if it can move upwards
-                    if i > 0 { // Ensure it's not on the top row
-                        if j > 0 && board[i - 1][j - 1] == "." {
-                            movable.insert(Coordinate(row: i, col: j))
+                    let currentCoordinate = Coordinate(row: i, col: j)
+                    for direction in directions {
+                        let jumpRow = i + 2 * direction.0
+                        let jumpCol = j + 2 * direction.1
+                        let middleRow = i + direction.0
+                        let middleCol = j + direction.1
+                        
+                        // Check for possible jumps
+                        if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count,
+                           board[middleRow][middleCol] == "#", board[jumpRow][jumpCol] == "." {
+                            jumpers.insert(currentCoordinate)
                         }
-                        if j < board[i].count - 1 && board[i - 1][j + 1] == "." {
-                            movable.insert(Coordinate(row: i, col: j))
+                        
+                        // Check for simple moves if no jumpers found yet
+                        if jumpers.isEmpty {
+                            let moveRow = i + direction.0
+                            let moveCol = j + direction.1
+                            if moveRow >= 0, moveRow < board.count, moveCol >= 0, moveCol < board[moveRow].count,
+                               board[moveRow][moveCol] == "." {
+                                movable.insert(currentCoordinate)
+                            }
                         }
                     }
                 }
             }
         }
-        return movable
+        
+        // Priority to jumpers if available
+        return jumpers.isEmpty ? movable : jumpers
     }
     
     func placedChecker(from: Coordinate, to: Coordinate) {
@@ -110,36 +126,64 @@ class Game {
     }
     
     func computerMove() {
+        let movableCheckers = findMovableCheckersForBlack()
         var possibleMoves: [(from: Coordinate, to: Coordinate)] = []
-                for row in 0..<board.count {
-            for col in 0..<board[row].count where board[row][col] == "#" {
-                let possibleDropPoints = possibleDropPointForBlack(row: row, col: col)
+
+        // Prioritize captures
+        for checker in movableCheckers {
+            let possibleDropPoints = possibleDropPointForBlack(row: checker.row, col: checker.col, prioritizeCapture: true)
+            for dropPoint in possibleDropPoints {
+                possibleMoves.append((from: checker, to: dropPoint))
+            }
+        }
+
+        // If no captures, add simple moves
+        if possibleMoves.isEmpty {
+            for checker in movableCheckers {
+                let possibleDropPoints = possibleDropPointForBlack(row: checker.row, col: checker.col, prioritizeCapture: false)
                 for dropPoint in possibleDropPoints {
-                    possibleMoves.append((from: Coordinate(row: row, col: col), to: dropPoint))
+                    possibleMoves.append((from: checker, to: dropPoint))
                 }
             }
         }
-        
+
+        // Randomly choose a move from the list of possible moves
         if let randomMove = possibleMoves.randomElement() {
             performMove(from: randomMove.from, to: randomMove.to)
         }
     }
-    
-    private func possibleDropPointForBlack(row: Int, col: Int) -> Set<Coordinate> {
-        var places: Set<Coordinate> = []
-        let directions = [(1, -1), (1, 1), (-1, -1), (-1, 1)] // All directions for movement
-        
-        for (dRow, dCol) in directions {
-            let jumpRow = row + 2 * dRow
-            let jumpCol = col + 2 * dCol
-            if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count {
-                if board[row + dRow][col + dCol] == "@" && board[jumpRow][jumpCol] == "." {
-                    places.insert(Coordinate(row: jumpRow, col: jumpCol))
+
+    private func findMovableCheckersForBlack() -> Set<Coordinate> {
+        var movable: Set<Coordinate> = []
+        for row in 0..<board.count {
+            for col in 0..<board[row].count where board[row][col] == "#" {
+                if !possibleDropPointForBlack(row: row, col: col, prioritizeCapture: true).isEmpty || !possibleDropPointForBlack(row: row, col: col, prioritizeCapture: false).isEmpty {
+                    movable.insert(Coordinate(row: row, col: col))
                 }
             }
         }
-        
-        if places.isEmpty {
+        return movable
+    }
+
+    private func possibleDropPointForBlack(row: Int, col: Int, prioritizeCapture: Bool) -> Set<Coordinate> {
+        var places: Set<Coordinate> = []
+        let directions = [(1, -1), (1, 1), (-1, -1), (-1, 1)] // All directions for movement
+
+        // First check for jumps if prioritizing captures
+        if prioritizeCapture {
+            for (dRow, dCol) in directions {
+                let jumpRow = row + 2 * dRow
+                let jumpCol = col + 2 * dCol
+                if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count {
+                    if board[row + dRow][col + dCol] == "@" && board[jumpRow][jumpCol] == "." {
+                        places.insert(Coordinate(row: jumpRow, col: jumpCol))
+                    }
+                }
+            }
+        }
+
+        // If not prioritizing captures or no jumps available, check for simple moves
+        if places.isEmpty || !prioritizeCapture {
             for (dRow, dCol) in directions {
                 let newRow = row + dRow
                 let newCol = col + dCol
@@ -148,7 +192,7 @@ class Game {
                 }
             }
         }
-        
+
         return places
     }
     
