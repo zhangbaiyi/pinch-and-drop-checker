@@ -26,14 +26,22 @@ class ChessBoardView: UIView {
         }
     }
     
-    func addChecker(at row: Int, column: Int, color: Checker.Color) {
+    func addChecker(at row: Int, column: Int, color: Checker.Color, isKing: Bool) {
         let squareSize = self.bounds.width / 8
         let checkerSize = squareSize * 0.8
         let xOffset = (squareSize - checkerSize) / 2
         let yOffset = (squareSize - checkerSize) / 2
-        let checker = Checker(color: color, location: CGPoint(x: CGFloat(column) * squareSize + xOffset, y: CGFloat(row) * squareSize + yOffset), size: checkerSize)
-        checker.tag = row * 8 + column
-        self.addSubview(checker)
+        if !isKing {
+            let checker = Checker(color: color, location: CGPoint(x: CGFloat(column) * squareSize + xOffset, y: CGFloat(row) * squareSize + yOffset), size: checkerSize)
+            checker.tag = row * 8 + column
+            self.addSubview(checker)
+        }
+        else{
+            let checker = Checker(color: color, location: CGPoint(x: CGFloat(column) * squareSize + xOffset, y: CGFloat(row) * squareSize + yOffset), size: checkerSize)
+            checker.king = true
+            checker.tag = row * 8 + column
+            self.addSubview(checker)
+        }
     }
     
     func removeGlowingCircleHintsFromView() {
@@ -56,7 +64,7 @@ class ChessBoardView: UIView {
                 switch cell {
                 case "#", "@":
                     let checkerColor: Checker.Color = cell == "#" ? .black : .white
-                    self.addChecker(at: rowIndex, column: columnIndex, color: checkerColor)
+                    self.addChecker(at: rowIndex, column: columnIndex, color: checkerColor, isKing: false)
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
                     
                     if Game.shared.state == .choice {
@@ -65,7 +73,18 @@ class ChessBoardView: UIView {
                             addGlowEffect(toCheckerAt: rowIndex, column: columnIndex)
                         }
                     }
+                case "B", "W":
+                    print("Should be king")
+                    let checkerColor: Checker.Color = cell == "B" ? .black : .white
+                    self.addChecker(at: rowIndex, column: columnIndex, color: checkerColor, isKing: true)
+                    let coordinate = Coordinate(row: rowIndex, col: columnIndex)
                     
+                    if Game.shared.state == .choice {
+                        let movableCheckers = Game.shared.findMovableCheckers()
+                        if movableCheckers.contains(coordinate) {
+                            addGlowEffect(toCheckerAt: rowIndex, column: columnIndex)
+                        }
+                    }
                 case ".":
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
                     
