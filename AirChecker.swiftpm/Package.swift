@@ -20,8 +20,8 @@ let package = Package(
             teamIdentifier: "QDPR4467TM",
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .asset("AppIcon"),
-            accentColor: .presetColor(.red),
+            appIcon: .placeholder(icon: .coins),
+            accentColor: .asset("AccentColor"),
             supportedDeviceFamilies: [
                 .pad,
                 .phone
@@ -34,7 +34,8 @@ let package = Package(
             ],
             capabilities: [
                 .camera(purposeString: "Unknown Usage Description")
-            ]
+            ],
+            appCategory: .boardGames
         )
     ],
     targets: [
