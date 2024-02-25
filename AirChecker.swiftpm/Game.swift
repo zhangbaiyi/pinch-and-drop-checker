@@ -66,13 +66,47 @@ class Game {
         abs(to.row - from.row) + abs(to.col - from.col)
     }
     
+
+    
+    func placeCheckerAt(row: Int, column: Int) {
+  
+        guard Game.shared.selected != nil else {
+            return
+        }
+        let start = Game.shared.selected
+        let end = Coordinate(row: row, col: column)
+        
+        let captures = findWayToDestination(start: Game.shared.selected!, end: end)
+        if !captures.isEmpty {
+            for coordinate in captures {
+                if board[coordinate.row][coordinate.col] == "#" {
+                    board[coordinate.row][coordinate.col] = "."
+                }
+            }
+        }
+        if board[row][column] == "." {
+            board[row][column] = "@"
+        }
+        Game.shared.selected = nil
+        Game.shared.selectedKind = nil
+        computerMove()
+    }
+    
+    
+    func isWhiteCheckerAt(row: Int, col: Int) -> Bool{
+        guard row >= 0, row < board.count, col >= 0, col < board[row].count else {
+            return false
+        }
+        return board[row][col] == "@"
+    }
+    
     func findWayToDestination(start: Coordinate, end: Coordinate) -> Set<Coordinate> {
         var res: Set<Coordinate> = []
         let directions = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
         
         func findCaptures(from coordinate: Coordinate, visited: inout Set<Coordinate>, currentPath: inout Set<Coordinate>) -> Bool {
             if coordinate.row == end.row && coordinate.col == end.col {
-                res = currentPath // Found a path to the destination
+                res = currentPath
                 return true
             }
             
@@ -87,58 +121,19 @@ class Game {
                         let capturedCoordinate = Coordinate(row: coordinate.row + dRow, col: coordinate.col + dCol)
                         currentPath.insert(capturedCoordinate)
                         if findCaptures(from: newCoordinate, visited: &visited, currentPath: &currentPath) {
-                            return true // Path to the end found, no need to explore further
+                            return true
                         }
-                        currentPath.remove(capturedCoordinate) // Backtrack: remove the captured checker if it doesn't lead to the end
+                        currentPath.remove(capturedCoordinate) // Backtrack
                     }
                 }
             }
-            return false // No valid jump found from this coordinate
+            return false
         }
         
         var visited: Set<Coordinate> = [start]
         var currentPath: Set<Coordinate> = []
         _ = findCaptures(from: start, visited: &visited, currentPath: &currentPath)
         return res
-    }
-    
-    func placeCheckerAt(row: Int, column: Int) {
-  
-        guard Game.shared.selected != nil else {
-            return
-        }
-        let start = Game.shared.selected
-        let end = Coordinate(row: row, col: column)
-        Game.shared.placedChecker(from: Game.shared.selected!, to: end)
-        let blacks = findWayToDestination(start: Game.shared.selected!, end: end)
-        if board[row][column] == "." {
-            board[row][column] = "@"
-        }
-        Game.shared.selected = nil
-        Game.shared.selectedKind = nil
-    }
-    
-    func placedChecker(from: Coordinate, to: Coordinate) {
-        //todo: update chessboard
-        //1. eat black checkers if any
-        //2. call function blackCheckerMove()
-        let isJump = abs(from.row - to.row) == 2 && abs(from.col - to.col) == 2
-        if isJump {
-            let middleRow = (from.row + to.row) / 2
-            let middleCol = (from.col + to.col) / 2
-            if board[middleRow][middleCol] == "#" {
-                board[middleRow][middleCol] = "."
-            }
-        }
-        computerMove()
-    }
-    
-    
-    func isWhiteCheckerAt(row: Int, col: Int) -> Bool{
-        guard row >= 0, row < board.count, col >= 0, col < board[row].count else {
-            return false
-        }
-        return board[row][col] == "@"
     }
     
     

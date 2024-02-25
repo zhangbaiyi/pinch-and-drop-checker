@@ -213,9 +213,7 @@ class CameraViewController: UIViewController {
     
     private func isPlacableCellAt(row: Int, column: Int) -> Bool {
         let spot = Coordinate(row: row, col: column)
-//        let possiblePlaces = Game.shared.possibleDropPoint()
         let possiblePlaces = Game.shared.findPossibleMoveDestination()
-
         if possiblePlaces.contains(spot) {
             return true
         }
