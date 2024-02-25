@@ -59,6 +59,9 @@ class ChessBoardView: UIView {
         let board = Game.shared.board
         print("Holding piece? ", Game.shared.state)
         
+        let movableCheckers = Game.shared.findMovableCheckers()
+
+        
         for (rowIndex, row) in board.enumerated() {
             for (columnIndex, cell) in row.enumerated() {
                 switch cell {
@@ -66,9 +69,7 @@ class ChessBoardView: UIView {
                     let checkerColor: Checker.Color = cell == "#" ? .black : .white
                     self.addChecker(at: rowIndex, column: columnIndex, color: checkerColor, isKing: false)
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
-                    
                     if Game.shared.state == .choice {
-                        let movableCheckers = Game.shared.findMovableCheckers()
                         if movableCheckers.contains(coordinate) {
                             addGlowEffect(toCheckerAt: rowIndex, column: columnIndex)
                         }
@@ -80,22 +81,20 @@ class ChessBoardView: UIView {
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
                     
                     if Game.shared.state == .choice {
-                        let movableCheckers = Game.shared.findMovableCheckers()
                         if movableCheckers.contains(coordinate) {
                             addGlowEffect(toCheckerAt: rowIndex, column: columnIndex)
                         }
                     }
                 case ".":
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
-                    
                     if Game.shared.state == .hint {
                         let possiblePlaces = Game.shared.findPossibleMoveDestination()
+                        print(possiblePlaces)
                         if possiblePlaces.contains(coordinate) {
                             addGlowingCircle(at: rowIndex, column: columnIndex)
                         }
                     }
                 default:
-                    
                     continue
                 }
             }

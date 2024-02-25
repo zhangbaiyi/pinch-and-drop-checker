@@ -13,24 +13,17 @@ class Game {
     
     var state: GameState = .choice
     
-    var board: [[Character]] = [[".", "B", ".", "#", ".", "#", ".", "."],
-                                ["#", ".", "#", ".", "#", ".", ".", "."],
-                                [".", "#", ".", ".", ".", "#", ".", "#"],
-                                [".", ".", "#", ".", "#", ".", "@", "."],
-                                [".", ".", ".", ".", ".", "@", ".", "."],
-                                ["@", ".", "@", ".", ".", ".", ".", "."],
-                                [".", "@", ".", ".", ".", "@", ".", "@"],
-                                ["@", ".", "@", ".", ".", "W", ".", "."]]
-//    [
-//        [".", "#", ".", "#", ".", "#", ".", "#"],
-//        ["#", ".", "#", ".", "#", ".", "#", "."],
-//        [".", "#", ".", "#", ".", "#", ".", "#"],
-//        [".", ".", ".", ".", ".", ".", ".", "."],
-//        [".", ".", ".", ".", ".", ".", ".", "."],
-//        ["@", ".", "@", ".", "@", ".", "@", "."],
-//        [".", "@", ".", "@", ".", "@", ".", "@"],
-//        ["@", ".", "@", ".", "@", ".", "@", "."]
-//    ]
+    var board: [[Character]] =
+    [
+        [".", "#", ".", "#", ".", "#", ".", "#"],
+        ["#", ".", "#", ".", "#", ".", "#", "."],
+        [".", "#", ".", "#", ".", "W", ".", "#"],
+        [".", ".", "#", ".", ".", ".", ".", "."],
+        [".", "B", ".", ".", ".", ".", ".", "."],
+        ["B", ".", "B", ".", "B", ".", "B", "."],
+        [".", "@", ".", "@", ".", "@", ".", "@"],
+        ["@", ".", "@", ".", "@", ".", "@", "."]
+    ]
     
     var selected: Coordinate? = nil
     var selectedKind: Character? = nil
@@ -70,36 +63,55 @@ class Game {
         guard Game.shared.selected != nil else {
             return
         }
+        guard Game.shared.selectedKind != nil else {
+            return
+        }
         let start = Game.shared.selected
         let end = Coordinate(row: row, col: column)
         
         let captures = findWayToDestination(start: Game.shared.selected!, end: end)
         if !captures.isEmpty {
             for coordinate in captures {
-                if board[coordinate.row][coordinate.col] == "#" {
+                if isComputer(row: coordinate.row, col: coordinate.col) {
                     board[coordinate.row][coordinate.col] = "."
                 }
             }
         }
-        if row == 0 && board[row][column] == "." {
+        if row == 0 && selectedKind! == "@" && board[row][column] == "." {
             board[row][column] = "W"
             print(board)
         }
         else if board[row][column] == "."{
-            board[row][column] = "@"
-
+            board[row][column] = selectedKind!
         }
         Game.shared.selected = nil
         Game.shared.selectedKind = nil
         computerMove()
     }
     
+    func isUser(row: Int, col: Int) -> Bool{
+        if board[row][col] == "@" || board[row][col] == "W" {
+            return true
+        }
+        else {
+            return false
+        }
+    }
+    
+    func isComputer(row: Int, col: Int) -> Bool{
+        if board[row][col] == "#" || board[row][col] == "B" {
+            return true
+        }
+        else {
+            return false
+        }
+    }
     
     func isWhiteCheckerAt(row: Int, col: Int) -> Bool{
         guard row >= 0, row < board.count, col >= 0, col < board[row].count else {
             return false
         }
-        return board[row][col] == "@"
+        return isUser(row: row, col: col)
     }
     
     func findWayToDestination(start: Coordinate, end: Coordinate) -> Set<Coordinate> {
@@ -117,7 +129,7 @@ class Game {
                 let jumpCol = coordinate.col + 2*dCol
                 
                 if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, !visited.contains(Coordinate(row: jumpRow, col: jumpCol)) {
-                    if board[coordinate.row + dRow][coordinate.col + dCol] == "#" && board[jumpRow][jumpCol] == "." {
+                    if isComputer(row: coordinate.row + dRow, col: coordinate.col + dCol) && board[jumpRow][jumpCol] == "." {
                         let newCoordinate = Coordinate(row: jumpRow, col: jumpCol)
                         visited.insert(newCoordinate)
                         let capturedCoordinate = Coordinate(row: coordinate.row + dRow, col: coordinate.col + dCol)
@@ -140,15 +152,19 @@ class Game {
     
     
     func findPossibleMoveDestination() -> Set<Coordinate> {
-        guard let selected = selected else {
-            print("possibleDrop -> selected is nil!!!")
+        guard let usersPick = selected else {
             return []
         }
-        let r = selected.row
-        let c = selected.col
+        guard selectedKind != nil else {
+            return []
+        }
+        let r = usersPick.row
+        let c = usersPick.col
+        print("111 ", r, c, board[r][c])
         var places: Set<Coordinate> = []
         
         let simpleMoveDirections = [(-1, -1), (-1, 1)]
+        let kingMoveDirections = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         
         func calculateTotalDistance(from start: Coordinate, to end: Coordinate, currentDistance: Int) -> Int {
             return currentDistance + abs(end.row - start.row) + abs(end.col - start.col)
@@ -167,7 +183,7 @@ class Game {
                 let jumpCol = coordinate.col + 2*dCol
                 
                 if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, !visited.contains(Coordinate(row: jumpRow, col: jumpCol)) {
-                    if board[coordinate.row + dRow][coordinate.col + dCol] == "#" && board[jumpRow][jumpCol] == "." {
+                    if isComputer(row: coordinate.row + dRow, col: coordinate.col + dCol) && board[jumpRow][jumpCol] == "." {
                         let newCoordinate = Coordinate(row: jumpRow, col: jumpCol)
                         visited.insert(newCoordinate)
                         
@@ -187,14 +203,25 @@ class Game {
             return localPlaces
         }
         var furthestDistance = 0
-        places = findAllJumps(from: Coordinate(row: selected.row, col: selected.col), visited: &visited, totalDistance: 0, furthestDistance: &furthestDistance)
+        places = findAllJumps(from: Coordinate(row: usersPick.row, col: usersPick.col), visited: &visited, totalDistance: 0, furthestDistance: &furthestDistance)
         
         if places.isEmpty {
-            for (dRow, dCol) in simpleMoveDirections {
-                let newRow = r + dRow
-                let newCol = c + dCol
-                if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
-                    places.insert(Coordinate(row: newRow, col: newCol))
+            if selectedKind! == "@" {
+                for (dRow, dCol) in simpleMoveDirections {
+                    let newRow = r + dRow
+                    let newCol = c + dCol
+                    if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
+                        places.insert(Coordinate(row: newRow, col: newCol))
+                    }
+                }
+            }
+            if selectedKind! == "W" {
+                for (dRow, dCol) in kingMoveDirections{
+                    let newRow = r + dRow
+                    let newCol = c + dCol
+                    if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
+                        places.insert(Coordinate(row: newRow, col: newCol))
+                    }
                 }
             }
         }
@@ -208,12 +235,11 @@ class Game {
         var jumpers: Set<Coordinate> = []
         let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         let direction_normal = [(-1, -1), (-1, 1)]
-        let direction_king = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         
         
         for i in 0..<board.count {
             for j in 0..<board[i].count {
-                if board[i][j] == "@" {
+                if isUser(row: i, col: j) {
                     let currentCoordinate = Coordinate(row: i, col: j)
                     for direction in directions {
                         let jumpRow = i + 2 * direction.0
@@ -221,8 +247,7 @@ class Game {
                         let middleRow = i + direction.0
                         let middleCol = j + direction.1
                         
-                        if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count,
-                           board[middleRow][middleCol] == "#", board[jumpRow][jumpCol] == "." {
+                        if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, isComputer(row: middleRow, col: middleCol), board[jumpRow][jumpCol] == "." {
                             jumpers.insert(currentCoordinate)
                         }
                     }
@@ -235,6 +260,17 @@ class Game {
                     if board[i][j] == "@" {
                         let currentCoordinate = Coordinate(row: i, col: j)
                         for direction in direction_normal {
+                            let moveRow = i + direction.0
+                            let moveCol = j + direction.1
+                            if moveRow >= 0, moveRow < board.count, moveCol >= 0, moveCol < board[moveRow].count,
+                               board[moveRow][moveCol] == "." {
+                                movable.insert(currentCoordinate)
+                            }
+                        }
+                    }
+                    if board[i][j] == "W" {
+                        let currentCoordinate = Coordinate(row: i, col: j)
+                        for direction in directions {
                             let moveRow = i + direction.0
                             let moveCol = j + direction.1
                             if moveRow >= 0, moveRow < board.count, moveCol >= 0, moveCol < board[moveRow].count,
@@ -265,19 +301,20 @@ class Game {
         
         if !captures.isEmpty {
             for coordinate in captures {
-                if board[coordinate.row][coordinate.col] == "@" {
+                if isUser(row: coordinate.row, col: coordinate.col) {
                     board[coordinate.row][coordinate.col] = "."
                 }
             }
         }
         
+        let selectedKindToMove = board[randomSelect!.row][randomSelect!.col]
         board[randomSelect!.row][randomSelect!.col] = "."
-        if des!.row == 7 {
+        if des!.row == 7 && selectedKindToMove == "#"{
             board[des!.row][des!.col] = "B"
 
         }
-        else{
-            board[des!.row][des!.col] = "#"
+        else {
+            board[des!.row][des!.col] = selectedKindToMove
         }
     }
     
@@ -286,20 +323,18 @@ class Game {
         var jumpers: Set<Coordinate> = []
         let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)] // Directions for jumps and moves
         let direction_normal = [(1, -1), (1, 1)]
-        let direction_king = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         
         
         for i in 0..<board.count {
             for j in 0..<board[i].count {
-                if board[i][j] == "#" {
+                if isComputer(row: i, col: j) {
                     let currentCoordinate = Coordinate(row: i, col: j)
                     for direction in directions {
                         let jumpRow = i + 2 * direction.0
                         let jumpCol = j + 2 * direction.1
                         let middleRow = i + direction.0
                         let middleCol = j + direction.1
-                        if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count,
-                           board[middleRow][middleCol] == "@", board[jumpRow][jumpCol] == "." {
+                        if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, isUser(row: middleRow, col: middleCol), board[jumpRow][jumpCol] == "." {
                             jumpers.insert(currentCoordinate)
                         }
                     }
@@ -321,6 +356,17 @@ class Game {
                             }
                         }
                     }
+                    if board[i][j] == "B" {
+                        for direction in directions {
+                            let currentCoordinate = Coordinate(row: i, col: j)
+                            let moveRow = i + 1 * direction.0
+                            let moveCol = j + 1 * direction.1
+                            if moveRow >= 0, moveRow < board.count, moveCol >= 0, moveCol < board[moveRow].count,
+                               board[moveRow][moveCol] == "." {
+                                movable.insert(currentCoordinate)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -333,6 +379,7 @@ class Game {
         var places: Set<Coordinate> = []
         
         let simpleMoveDirections = [(1, -1), (1, 1)]
+        let KingMoveDirections = [(1, -1), (1, 1), (-1, -1), (-1, 1)]
         
         func calculateTotalDistance(from start: Coordinate, to end: Coordinate, currentDistance: Int) -> Int {
             return currentDistance + abs(end.row - start.row) + abs(end.col - start.col)
@@ -351,7 +398,7 @@ class Game {
                 let jumpCol = coordinate.col + 2*dCol
                 
                 if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, !visited.contains(Coordinate(row: jumpRow, col: jumpCol)) {
-                    if board[coordinate.row + dRow][coordinate.col + dCol] == "@" && board[jumpRow][jumpCol] == "." {
+                    if isUser(row: coordinate.row + dRow, col: coordinate.col + dCol) && board[jumpRow][jumpCol] == "." {
                         let newCoordinate = Coordinate(row: jumpRow, col: jumpCol)
                         visited.insert(newCoordinate)
                         
@@ -374,11 +421,22 @@ class Game {
         places = findAllJumps(from: Coordinate(row: pick.row, col: pick.col), visited: &visited, totalDistance: 0, furthestDistance: &furthestDistance)
         
         if places.isEmpty {
-            for (dRow, dCol) in simpleMoveDirections {
-                let newRow = r + dRow
-                let newCol = c + dCol
-                if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
-                    places.insert(Coordinate(row: newRow, col: newCol))
+            if board[r][c] == "#" {
+                for (dRow, dCol) in simpleMoveDirections {
+                    let newRow = r + dRow
+                    let newCol = c + dCol
+                    if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
+                        places.insert(Coordinate(row: newRow, col: newCol))
+                    }
+                }
+            }
+            if board[r][c] == "B" {
+                for (dRow, dCol) in KingMoveDirections {
+                    let newRow = r + dRow
+                    let newCol = c + dCol
+                    if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
+                        places.insert(Coordinate(row: newRow, col: newCol))
+                    }
                 }
             }
         }
@@ -401,7 +459,7 @@ class Game {
                 let jumpCol = coordinate.col + 2*dCol
                 
                 if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count, !visited.contains(Coordinate(row: jumpRow, col: jumpCol)) {
-                    if board[coordinate.row + dRow][coordinate.col + dCol] == "@" && board[jumpRow][jumpCol] == "." {
+                    if isUser(row: coordinate.row + dRow, col: coordinate.col + dCol) && board[jumpRow][jumpCol] == "." {
                         let newCoordinate = Coordinate(row: jumpRow, col: jumpCol)
                         visited.insert(newCoordinate)
                         let capturedCoordinate = Coordinate(row: coordinate.row + dRow, col: coordinate.col + dCol)
