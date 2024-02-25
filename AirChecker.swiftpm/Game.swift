@@ -74,8 +74,13 @@ class Game {
                 }
             }
         }
-        if board[row][column] == "." {
+        if row == 0 && board[row][column] == "." {
+            board[row][column] = "W"
+            print(board)
+        }
+        else if board[row][column] == "."{
             board[row][column] = "@"
+
         }
         Game.shared.selected = nil
         Game.shared.selectedKind = nil
@@ -260,7 +265,13 @@ class Game {
         }
         
         board[randomSelect!.row][randomSelect!.col] = "."
-        board[des!.row][des!.col] = "#"
+        if des!.row == 7 {
+            board[des!.row][des!.col] = "B"
+
+        }
+        else{
+            board[des!.row][des!.col] = "#"
+        }
     }
     
     private func findMovableCheckersForComputer() -> Set<Coordinate> {
@@ -402,51 +413,6 @@ class Game {
         var currentPath: Set<Coordinate> = []
         _ = findCaptures(from: start, visited: &visited, currentPath: &currentPath)
         return res
-    }
-    
-    
-    private func possibleDropPointForBlack(row: Int, col: Int, prioritizeCapture: Bool) -> Set<Coordinate> {
-        var places: Set<Coordinate> = []
-        let directions = [(1, -1), (1, 1), (-1, -1), (-1, 1)] // All directions for movement
-
-        if prioritizeCapture {
-            for (dRow, dCol) in directions {
-                let jumpRow = row + 2 * dRow
-                let jumpCol = col + 2 * dCol
-                if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count {
-                    if board[row + dRow][col + dCol] == "@" && board[jumpRow][jumpCol] == "." {
-                        places.insert(Coordinate(row: jumpRow, col: jumpCol))
-                    }
-                }
-            }
-        }
-
-        // If not prioritizing captures or no jumps available, check for simple moves
-        if places.isEmpty || !prioritizeCapture {
-            for (dRow, dCol) in directions {
-                let newRow = row + dRow
-                let newCol = col + dCol
-                if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
-                    places.insert(Coordinate(row: newRow, col: newCol))
-                }
-            }
-        }
-
-        return places
-    }
-    
-    private func performMove(from: Coordinate, to: Coordinate) {
-        // Remove the checker from the original position
-        board[from.row][from.col] = "."
-        // Place the checker in the new position
-        board[to.row][to.col] = "#"
-        // If the move was a jump, remove the jumped checker
-        let isJump = abs(from.row - to.row) == 2 && abs(from.col - to.col) == 2
-        if isJump {
-            let middleRow = (from.row + to.row) / 2
-            let middleCol = (from.col + to.col) / 2
-            board[middleRow][middleCol] = "."
-        }
     }
     
 }
