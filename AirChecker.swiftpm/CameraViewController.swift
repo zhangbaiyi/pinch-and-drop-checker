@@ -202,12 +202,14 @@ class CameraViewController: UIViewController {
     
     
     private func isMovableCheckerAt(row: Int, column: Int) -> Bool {
-        for checker in movableCheckers {
-            if checker[0] == row && checker[1] == column {
-                return true
-            }
+        let spot = Coordinate(row: row, col: column)
+        let movableCheckers = Game.shared.findMovableCheckers()
+        if movableCheckers.contains(spot) {
+            return true
         }
-        return false
+        else {
+            return false
+        }
     }
     
     private func removeCheckerOnBoard(row: Int, column: Int) {
@@ -216,7 +218,6 @@ class CameraViewController: UIViewController {
     }
     
     private func isPlacableCellAt(row: Int, column: Int) -> Bool {
-        //Dummy judge for now:
         let spot = Coordinate(row: row, col: column)
         guard (selectedCheckerPosition != nil) else {
             return false

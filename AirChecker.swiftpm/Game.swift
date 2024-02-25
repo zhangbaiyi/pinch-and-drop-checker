@@ -47,7 +47,7 @@ class Game {
         var places: Set<Coordinate> = []
         //if board[row][col] == "@"
         let directions = [(-1, -1), (-1, 1)] // Assuming '@' represents a white checker, moving up the board
-
+        
         for (dRow, dCol) in directions {
             let jumpRow = row + 2*dRow
             let jumpCol = col + 2*dCol
@@ -58,11 +58,11 @@ class Game {
                 }
             }
         }
-
+        
         if !places.isEmpty {
             return places
         }
-
+        
         for (dRow, dCol) in directions {
             let newRow = row + dRow
             let newCol = col + dCol
@@ -74,37 +74,24 @@ class Game {
         return places
     }
     
-    func findMovableCheckers() -> (userMovableCheckers: [[Int]], compMovableCheckers: [[Int]]) {
-        var userMovableCheckers: [[Int]] = []
-        var compMovableCheckers: [[Int]] = []
-        
+    func findMovableCheckers() -> Set<Coordinate> {
+        var movable: Set<Coordinate> = []
         for i in 0..<board.count {
             for j in 0..<board[i].count {
                 if board[i][j] == "@" {
                     // User's checker, check if it can move upwards
                     if i > 0 { // Ensure it's not on the top row
                         if j > 0 && board[i - 1][j - 1] == "." {
-                            userMovableCheckers.append([i, j])
+                            movable.insert(Coordinate(row: i, col: j))
                         }
                         if j < board[i].count - 1 && board[i - 1][j + 1] == "." {
-                            userMovableCheckers.append([i, j])
-                        }
-                    }
-                } else if board[i][j] == "#" {
-                    // Computer's checker, check if it can move downwards
-                    if i < board.count - 1 { // Ensure it's not on the bottom row
-                        if j > 0 && board[i + 1][j - 1] == "." {
-                            compMovableCheckers.append([i, j])
-                        }
-                        if j < board[i].count - 1 && board[i + 1][j + 1] == "." {
-                            compMovableCheckers.append([i, j])
+                            movable.insert(Coordinate(row: i, col: j))
                         }
                     }
                 }
             }
         }
-        print(userMovableCheckers)
-        
-        return (userMovableCheckers, compMovableCheckers)
+        return movable
     }
+    
 }
