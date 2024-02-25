@@ -25,6 +25,7 @@ class Game {
     ]
     
     var selected: Coordinate? = nil
+    var selectedKind: Character? = nil
     
     private init() {}
     
@@ -34,10 +35,40 @@ class Game {
         }
     }
     
+    func getSelectedCheckerKind() -> Character{
+        guard selected != nil else {
+            return "n"
+        }
+        return board[selected!.row][selected!.col]
+        
+    }
+    
+    func returnChecker(kind: Character) {
+        guard selected != nil else {
+            return
+        }
+        guard selectedKind != nil else {
+            print("selected kind is nil")
+            return
+        }
+        board[selected!.row][selected!.col] = selectedKind!
+        print(kind)
+        print(selected)
+        print(board)
+    }
+    
     func placeCheckerAt(row: Int, column: Int) {
         if board[row][column] == "." {
             board[row][column] = "@"
         }
+        guard Game.shared.selected != nil else {
+            return
+        }
+        let start = Game.shared.selected
+        let end = Coordinate(row: row, col: column)
+        Game.shared.placedChecker(from: Game.shared.selected!, to: end)
+        Game.shared.selected = nil
+        Game.shared.selectedKind = nil
     }
     
     func isWhiteCheckerAt(row: Int, col: Int) -> Bool{
@@ -54,6 +85,10 @@ class Game {
         }
         let r = selected!.row
         let c = selected!.col
+        
+        if r == 1 {
+            print("stop")
+        }
         var places: Set<Coordinate> = []
         //if board[row][col] == "@"
         let directions = [(-1, -1), (-1, 1)] // Assuming '@' represents a white checker, moving up the board
@@ -69,6 +104,7 @@ class Game {
             }
         }
         
+
         if places.isEmpty {
             for (dRow, dCol) in directions {
                 let newRow = r + dRow
@@ -85,12 +121,18 @@ class Game {
         var movable: Set<Coordinate> = []
         var jumpers: Set<Coordinate> = []
         let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)] // Directions for jumps and moves
+        let direction_normal = [(-1, -1), (-1, 1)]
+        let direction_king = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+        
         
         for i in 0..<board.count {
             for j in 0..<board[i].count {
                 if board[i][j] == "@" {
+                    if i == 1 {
+                        print("Stop")
+                    }
                     let currentCoordinate = Coordinate(row: i, col: j)
-                    for direction in directions {
+                    for direction in direction_normal {
                         let jumpRow = i + 2 * direction.0
                         let jumpCol = j + 2 * direction.1
                         let middleRow = i + direction.0

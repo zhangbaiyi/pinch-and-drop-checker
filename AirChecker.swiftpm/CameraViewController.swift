@@ -183,14 +183,9 @@ class CameraViewController: UIViewController {
             return
         }
         
-        // Convert points from AVFoundation coordinates to UIKit coordinates.
         let previewLayer = cameraView.previewLayer
         let thumbPointConverted = previewLayer.layerPointConverted(fromCaptureDevicePoint: thumbPoint)
         let indexPointConverted = previewLayer.layerPointConverted(fromCaptureDevicePoint: indexPoint)
-        
-        let thumbPosition = findPosition(for: thumbPointConverted)
-        let indexPosition = findPosition(for: indexPointConverted)
-        
         
         gestureProcessor.processPointsPair((thumbPointConverted, indexPointConverted))
     }
@@ -227,11 +222,15 @@ class CameraViewController: UIViewController {
         }
     }
     
+    private func returnChecker(kind: Character) {
+        if kind != "n" {
+            Game.shared.returnChecker(kind: kind)
+        }
+    }
+    
     
     private func placeCheckerOnBoard(row: Int, column: Int) {
         Game.shared.placeCheckerAt(row: row, column: column)
-        self.chessBoardView.deployCheckerOnBoard()
-
     }
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
@@ -255,6 +254,7 @@ class CameraViewController: UIViewController {
                     if isMovableCheckerAt(row: thumbPosition.row, column: thumbPosition.column) {
                         print("[[[Is movable checker]]] + Previous State is possible pinched AND fingers focusing on a cell")
                         Game.shared.selected = Coordinate(row: thumbPosition.row, col: thumbPosition.column)
+                        Game.shared.selectedKind = Game.shared.board[thumbPosition.row][thumbPosition.column]
                         removeCheckerOnBoard(row: thumbPosition.row, column: thumbPosition.column)
                         isHolding = true
                         Game.shared.state = .choice
@@ -284,20 +284,15 @@ class CameraViewController: UIViewController {
                         if isPlacableCellAt(row: droppedPosition.row, column: droppedPosition.column) {
                             print("[[[Droppable Place]]]Previous State is possible apart AND droped on a cell")
                             placeCheckerOnBoard(row: droppedPosition.row, column: droppedPosition.column)
-                            guard Game.shared.selected != nil else {
-                                return
-                            }
-                            let start = Game.shared.selected
-                            let end = Coordinate(row: droppedPosition.row, col: droppedPosition.column)
-                            Game.shared.placedChecker(from: start!, to: end)
-                            Game.shared.selected = nil
                             self.chessBoardView.deployCheckerOnBoard()
                         }
                         else{
                             guard (Game.shared.selected != nil) else {
                                 return
                             }
-                            placeCheckerOnBoard(row: Game.shared.selected!.row, column: Game.shared.selected!.col)
+                            returnChecker(kind: Game.shared.getSelectedCheckerKind())
+                            self.chessBoardView.deployCheckerOnBoard()
+
                         }
                         self.floatingCheckerView?.isHidden = true
                     }
