@@ -11,6 +11,8 @@ class Game {
     
     static let shared = Game()
     
+    var state: GameState = .choice
+    
     var board: [[Character]] = [
         [".", "#", ".", "#", ".", "#", ".", "#"],
         ["#", ".", "#", ".", "#", ".", "#", "."],
@@ -21,6 +23,8 @@ class Game {
         [".", "@", ".", "@", ".", "@", ".", "@"],
         ["@", ".", "@", ".", "@", ".", "@", "."]
     ]
+    
+    var selected: Coordinate? = nil
     
     private init() {}
     
@@ -43,17 +47,23 @@ class Game {
         return board[row][col] == "@"
     }
     
-    func possibleDropPoint(row: Int, col: Int) -> Set<Coordinate> {
+    func possibleDropPoint() -> Set<Coordinate> {
+        guard selected != nil else {
+            print("possibleDrop -> selected is nil!!!")
+            return []
+        }
+        let r = selected!.row
+        let c = selected!.col
         var places: Set<Coordinate> = []
         //if board[row][col] == "@"
         let directions = [(-1, -1), (-1, 1)] // Assuming '@' represents a white checker, moving up the board
         
         for (dRow, dCol) in directions {
-            let jumpRow = row + 2*dRow
-            let jumpCol = col + 2*dCol
+            let jumpRow = r + 2*dRow
+            let jumpCol = c + 2*dCol
             if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count {
                 // Check if there is an opponent checker to jump over and the landing square is empty
-                if board[row + dRow][col + dCol] == "#" && board[jumpRow][jumpCol] == "." {
+                if board[r + dRow][c + dCol] == "#" && board[jumpRow][jumpCol] == "." {
                     places.insert(Coordinate(row: jumpRow, col: jumpCol))
                 }
             }
@@ -61,8 +71,8 @@ class Game {
         
         if places.isEmpty {
             for (dRow, dCol) in directions {
-                let newRow = row + dRow
-                let newCol = col + dCol
+                let newRow = r + dRow
+                let newCol = c + dCol
                 if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
                     places.insert(Coordinate(row: newRow, col: newCol))
                 }
