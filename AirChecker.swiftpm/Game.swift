@@ -194,7 +194,7 @@ class Game {
     func findMovableCheckers() -> Set<Coordinate> {
         var movable: Set<Coordinate> = []
         var jumpers: Set<Coordinate> = []
-        let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)] // Directions for jumps and moves
+        let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         let direction_normal = [(-1, -1), (-1, 1)]
         let direction_king = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         
@@ -209,7 +209,6 @@ class Game {
                         let middleRow = i + direction.0
                         let middleCol = j + direction.1
                         
-                        // Check for possible jumps
                         if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count,
                            board[middleRow][middleCol] == "#", board[jumpRow][jumpCol] == "." {
                             jumpers.insert(currentCoordinate)
@@ -238,25 +237,18 @@ class Game {
         return jumpers.isEmpty ? movable : jumpers
     }
     
-
     func computerMove() {
-        let movableCheckers = findMovableCheckersForBlack()
-        var possibleMoves: [(from: Coordinate, to: Coordinate)] = []
-        
+        let movableCheckers = findMovableCheckersForComputer()
         let randomSelect = movableCheckers.randomElement()
         guard randomSelect != nil else {
             return
         }
-        print("selected black move")
-        print(randomSelect)
-        print("Possible destinations for random seleced")
-        let possiblePlaces = findPossibleMoveDestinationForComp(pick: randomSelect!)
+        let possiblePlaces = findPossibleMoveDestinationForComputer(pick: randomSelect!)
         let des = possiblePlaces.randomElement()
-        print(des)
         guard des != nil else {
             return
         }
-        let captures = findWayToDestinationForComp(start: randomSelect!, end: des!)
+        let captures = findWayToDestinationForComputer(start: randomSelect!, end: des!)
         print(captures)
         
         if !captures.isEmpty {
@@ -271,7 +263,7 @@ class Game {
         board[des!.row][des!.col] = "#"
     }
     
-    private func findMovableCheckersForBlack() -> Set<Coordinate> {
+    private func findMovableCheckersForComputer() -> Set<Coordinate> {
         var movable: Set<Coordinate> = []
         var jumpers: Set<Coordinate> = []
         let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)] // Directions for jumps and moves
@@ -317,7 +309,7 @@ class Game {
         return jumpers.isEmpty ? movable : jumpers
     }
 
-    private func findPossibleMoveDestinationForComp(pick: Coordinate) -> Set<Coordinate> {
+    private func findPossibleMoveDestinationForComputer(pick: Coordinate) -> Set<Coordinate> {
         let r = pick.row
         let c = pick.col
         var places: Set<Coordinate> = []
@@ -376,7 +368,7 @@ class Game {
         return places
     }
     
-    func findWayToDestinationForComp(start: Coordinate, end: Coordinate) -> Set<Coordinate> {
+    func findWayToDestinationForComputer(start: Coordinate, end: Coordinate) -> Set<Coordinate> {
         var res: Set<Coordinate> = []
         let directions = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
         
