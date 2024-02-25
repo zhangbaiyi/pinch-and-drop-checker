@@ -43,6 +43,37 @@ class Game {
         return board[row][col] == "@"
     }
     
+    func possibleDropPoint(row: Int, col: Int) -> Set<Coordinate> {
+        var places: Set<Coordinate> = []
+        //if board[row][col] == "@"
+        let directions = [(-1, -1), (-1, 1)] // Assuming '@' represents a white checker, moving up the board
+
+        for (dRow, dCol) in directions {
+            let jumpRow = row + 2*dRow
+            let jumpCol = col + 2*dCol
+            if jumpRow >= 0, jumpRow < board.count, jumpCol >= 0, jumpCol < board[jumpRow].count {
+                // Check if there is an opponent checker to jump over and the landing square is empty
+                if board[row + dRow][col + dCol] == "#" && board[jumpRow][jumpCol] == "." {
+                    places.insert(Coordinate(row: jumpRow, col: jumpCol))
+                }
+            }
+        }
+
+        if !places.isEmpty {
+            return places
+        }
+
+        for (dRow, dCol) in directions {
+            let newRow = row + dRow
+            let newCol = col + dCol
+            if newRow >= 0, newRow < board.count, newCol >= 0, newCol < board[newRow].count, board[newRow][newCol] == "." {
+                places.insert(Coordinate(row: newRow, col: newCol))
+            }
+        }
+        print(places)
+        return places
+    }
+    
     func findMovableCheckers() -> (userMovableCheckers: [[Int]], compMovableCheckers: [[Int]]) {
         var userMovableCheckers: [[Int]] = []
         var compMovableCheckers: [[Int]] = []
