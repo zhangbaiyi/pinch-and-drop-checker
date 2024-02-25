@@ -12,19 +12,17 @@ class Game {
     static let shared = Game()
     
     var state: GameState = .choice
+    weak var delegate: GameDelegate?
     
-    var board: [[Character]] =
-    [
-        [".", "#", ".", "#", ".", "#", ".", "#"],
-        ["#", ".", "#", ".", "#", ".", "#", "."],
-        [".", "#", ".", "#", ".", "W", ".", "#"],
-        [".", ".", "#", ".", ".", ".", ".", "."],
-        [".", "B", ".", ".", ".", ".", ".", "."],
-        ["B", ".", "B", ".", "B", ".", "B", "."],
-        [".", "@", ".", "@", ".", "@", ".", "@"],
-        ["@", ".", "@", ".", "@", ".", "@", "."]
-    ]
-    
+    var board: [[Character]] = [[".", "#", ".", "#", ".", "#", ".", "#"],
+                               ["#", ".", "#", ".", "#", ".", "#", "."],
+                               [".", "#", ".", "#", ".", "#", ".", "#"],
+                               [".", ".", ".", ".", ".", ".", ".", "."],
+                               [".", ".", ".", ".", ".", ".", ".", "."],
+                               ["@", ".", "@", ".", "@", ".", "@", "."],
+                               [".", "@", ".", "@", ".", "@", ".", "@"],
+                               ["@", ".", "@", ".", "@", ".", "@", "."]]
+
     var selected: Coordinate? = nil
     var selectedKind: Character? = nil
     
@@ -73,19 +71,18 @@ class Game {
         if !captures.isEmpty {
             for coordinate in captures {
                 if isComputer(row: coordinate.row, col: coordinate.col) {
-                    board[coordinate.row][coordinate.col] = "."
+                    self.board[coordinate.row][coordinate.col] = "."
                 }
             }
         }
         if row == 0 && selectedKind! == "@" && board[row][column] == "." {
             board[row][column] = "W"
-            print(board)
         }
         else if board[row][column] == "."{
             board[row][column] = selectedKind!
         }
-        Game.shared.selected = nil
-        Game.shared.selectedKind = nil
+        selected = nil
+        selectedKind = nil
         computerMove()
     }
     
@@ -160,7 +157,6 @@ class Game {
         }
         let r = usersPick.row
         let c = usersPick.col
-        print("111 ", r, c, board[r][c])
         var places: Set<Coordinate> = []
         
         let simpleMoveDirections = [(-1, -1), (-1, 1)]
@@ -174,8 +170,6 @@ class Game {
         var visited: Set<Coordinate> = [Coordinate(row: r, col: c)]
         
         func findAllJumps(from coordinate: Coordinate, visited: inout Set<Coordinate>, totalDistance: Int, furthestDistance: inout Int) -> Set<Coordinate> {
-            print(localPlaces)
-            print(visited)
             let directions = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
             
             for (dRow, dCol) in directions {
@@ -297,12 +291,10 @@ class Game {
             return
         }
         let captures = findWayToDestinationForComputer(start: randomSelect!, end: des!)
-        print(captures)
-        
         if !captures.isEmpty {
             for coordinate in captures {
                 if isUser(row: coordinate.row, col: coordinate.col) {
-                    board[coordinate.row][coordinate.col] = "."
+                    self.board[coordinate.row][coordinate.col] = "."
                 }
             }
         }
@@ -311,7 +303,6 @@ class Game {
         board[randomSelect!.row][randomSelect!.col] = "."
         if des!.row == 7 && selectedKindToMove == "#"{
             board[des!.row][des!.col] = "B"
-
         }
         else {
             board[des!.row][des!.col] = selectedKindToMove
@@ -389,8 +380,6 @@ class Game {
         var visited: Set<Coordinate> = [Coordinate(row: r, col: c)]
         
         func findAllJumps(from coordinate: Coordinate, visited: inout Set<Coordinate>, totalDistance: Int, furthestDistance: inout Int) -> Set<Coordinate> {
-            print(localPlaces)
-            print(visited)
             let directions = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
             
             for (dRow, dCol) in directions {

@@ -58,6 +58,7 @@ class CameraViewController: UIViewController {
         view.addGestureRecognizer(recognizer)
         initializeCheckersGameFrom2DArray()
         createSelectedCheckerView()
+        setDelegate()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -89,6 +90,12 @@ class CameraViewController: UIViewController {
         
         if let checkerView = floatingCheckerView {
             view.addSubview(checkerView)
+        }
+    }
+    
+    private func setDelegate() {
+        DispatchQueue.main.async {
+            Game.shared.delegate = self.chessBoardView
         }
     }
     
@@ -285,6 +292,7 @@ class CameraViewController: UIViewController {
                             print("[[[Droppable Place]]]Previous State is possible apart AND droped on a cell")
                             placeCheckerOnBoard(row: droppedPosition.row, column: droppedPosition.column)
                             self.chessBoardView.deployCheckerOnBoard()
+
                         }
                         else{
                             guard (Game.shared.selected != nil) else {
@@ -295,6 +303,7 @@ class CameraViewController: UIViewController {
 
                         }
                         self.floatingCheckerView?.isHidden = true
+
                     }
                 }
 
