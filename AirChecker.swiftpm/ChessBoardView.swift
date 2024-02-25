@@ -44,6 +44,24 @@ class ChessBoardView: UIView {
         }
     }
     
+    func removeChecker(at row: Int, column: Int) {
+        // Calculate the tag of the checker to find it among subviews
+        let checkerTag = row * 8 + column
+        
+        // Attempt to find the checker view by its tag
+        if let checkerToRemove = self.subviews.first(where: { $0.tag == checkerTag }) {
+            // Animate the checker fading out before removing it
+            UIView.animate(withDuration: 0.3, animations: {
+                checkerToRemove.alpha = 0 // Fade out
+            }) { (finished) in
+                if finished {
+                    // After the animation completes, remove the checker from the view
+                    checkerToRemove.removeFromSuperview()
+                }
+            }
+        }
+    }
+    
     func removeGlowingCircleHintsFromView() {
         self.subviews.forEach { subview in
             if subview is Circle {
