@@ -73,7 +73,9 @@ class ChessBoardView: UIView {
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
 
                     if Game.shared.state == .hint {
-                        let possiblePlaces = Game.shared.possibleDropPoint()
+                        let possiblePlaces = Game.shared.findPossibleMoveDestination()
+
+//                        let possiblePlaces = Game.shared.possibleDropPoint()
                         if possiblePlaces.contains(coordinate) {
                             addGlowingCircle(at: rowIndex, column: columnIndex)
                         }
