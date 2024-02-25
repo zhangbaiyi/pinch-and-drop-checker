@@ -17,7 +17,6 @@ class CameraViewController: UIViewController {
     private var rowRanges: [(start: CGFloat, end: CGFloat)] = []
     private var columnRanges: [(start: CGFloat, end: CGFloat)] = []
     
-    private var selectedCheckerPosition: (row: Int, column: Int)? //Not sure what to do with this
     private var floatingCheckerView: Checker?
     
     private var isPinching: Bool = false
@@ -219,10 +218,7 @@ class CameraViewController: UIViewController {
     
     private func isPlacableCellAt(row: Int, column: Int) -> Bool {
         let spot = Coordinate(row: row, col: column)
-        guard (selectedCheckerPosition != nil) else {
-            return false
-        }
-        let possiblePlaces = Game.shared.possibleDropPoint(row: self.selectedCheckerPosition!.row, col: self.selectedCheckerPosition!.column)
+        let possiblePlaces = Game.shared.possibleDropPoint()
         if possiblePlaces.contains(spot) {
             return true
         }
@@ -235,13 +231,7 @@ class CameraViewController: UIViewController {
     private func placeCheckerOnBoard(row: Int, column: Int) {
         Game.shared.placeCheckerAt(row: row, column: column)
         self.chessBoardView.deployCheckerOnBoard()
-        guard selectedCheckerPosition != nil else {
-            return
-        }
-        let start = Coordinate(row: selectedCheckerPosition!.row, col: selectedCheckerPosition!.column)
-        let end = Coordinate(row: row, col: column)
-        Game.shared.placedChecker(from: start, to: end)
-        self.chessBoardView.deployCheckerOnBoard()
+
     }
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
@@ -264,10 +254,10 @@ class CameraViewController: UIViewController {
                     print("Previous State is possible pinched AND fingers focusing on a cell")
                     if isMovableCheckerAt(row: thumbPosition.row, column: thumbPosition.column) {
                         print("[[[Is movable checker]]] + Previous State is possible pinched AND fingers focusing on a cell")
+                        Game.shared.selected = Coordinate(row: thumbPosition.row, col: thumbPosition.column)
                         removeCheckerOnBoard(row: thumbPosition.row, column: thumbPosition.column)
                         isHolding = true
-                        self.selectedCheckerPosition = (row: thumbPosition.row, column: thumbPosition.column)
-                        print("Selected checker at row: \(thumbPosition.row), column: \(thumbPosition.column)")
+                        Game.shared.state = .choice
                         self.floatingCheckerView?.isHidden = false
                     }
                 }
@@ -294,12 +284,20 @@ class CameraViewController: UIViewController {
                         if isPlacableCellAt(row: droppedPosition.row, column: droppedPosition.column) {
                             print("[[[Droppable Place]]]Previous State is possible apart AND droped on a cell")
                             placeCheckerOnBoard(row: droppedPosition.row, column: droppedPosition.column)
-                        }
-                        else{
-                            guard (selectedCheckerPosition != nil) else {
+                            guard Game.shared.selected != nil else {
                                 return
                             }
-                            placeCheckerOnBoard(row: selectedCheckerPosition!.row, column: selectedCheckerPosition!.column)
+                            let start = Game.shared.selected
+                            let end = Coordinate(row: droppedPosition.row, col: droppedPosition.column)
+                            Game.shared.placedChecker(from: start!, to: end)
+                            Game.shared.selected = nil
+                            self.chessBoardView.deployCheckerOnBoard()
+                        }
+                        else{
+                            guard (Game.shared.selected != nil) else {
+                                return
+                            }
+                            placeCheckerOnBoard(row: Game.shared.selected!.row, column: Game.shared.selected!.col)
                         }
                         self.floatingCheckerView?.isHidden = true
                     }
@@ -309,6 +307,7 @@ class CameraViewController: UIViewController {
             evidenceBuffer.removeAll()
             isPinching = false
             isHolding = false
+            Game.shared.state = .hint
             tipsColor = .red
         }
         cameraView.showPoints([pointsPair.thumbTip, pointsPair.indexTip], color: tipsColor)
