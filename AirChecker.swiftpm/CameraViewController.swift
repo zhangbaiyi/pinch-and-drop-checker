@@ -24,8 +24,14 @@ class CameraViewController: UIViewController {
     private var previousState: HandGestureProcessor.State = .unknown
     
     private var cameraView: CameraView { view as! CameraView }
+    private var blurEffectView: UIVisualEffectView?
+
     private var chessBoardView: ChessBoardView!
-    
+    private var scoreboardView: ScoreboardView!
+    private var winningView: WinningView!
+    private var lossingView: LossingView!
+
+    private var finishView: FinishView!
     private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
     
     
@@ -35,7 +41,8 @@ class CameraViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        
+        blurEffectView?.frame = view.bounds // Adjust if your camera view does not cover the entire screen
+
         if chessBoardView == nil { // Ensure it's only set up once
             let boardSize = min(view.bounds.width, view.bounds.height) * 0.8
             chessBoardView = ChessBoardView(frame: CGRect(x:0, y:0, width:boardSize, height:boardSize))
@@ -44,10 +51,45 @@ class CameraViewController: UIViewController {
             view.bringSubviewToFront(chessBoardView)
             calculateBoardCoordinates()
         }
+        if scoreboardView == nil {
+            scoreboardView = ScoreboardView(frame: CGRect(x: 20, y: chessBoardView.frame.maxY + 10, width: view.bounds.width - 40, height: 50))
+            view.addSubview(scoreboardView)
+            scoreboardView.score = Game.shared.score
+        }
+        if winningView == nil {
+            winningView = WinningView(frame: self.view.bounds)
+            self.view.addSubview(winningView!)
+            view.bringSubviewToFront(winningView)
+        }
+        
+        if lossingView == nil {
+            lossingView = LossingView(frame: self.view.bounds)
+            self.view.addSubview(lossingView!)
+            view.bringSubviewToFront(lossingView)
+        }
+        
+        if finishView == nil {
+            let resetButtonFrame = CGRect(x: view.bounds.maxX - 100, y: view.bounds.maxY - 150, width: 80, height: 80)
+            finishView = FinishView(frame: view.bounds, imageFrame: resetButtonFrame)
+            view.addSubview(finishView)
+            view.bringSubviewToFront(finishView)
+        } else {
+            finishView.frame = view.bounds
+        }
     }
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        let blurEffect = UIBlurEffect(style: .regular) // Choose the style that fits your needs
+                blurEffectView = UIVisualEffectView(effect: blurEffect)
+                blurEffectView?.frame = view.bounds // Assuming the camera view covers the entire screen
+                blurEffectView?.autoresizingMask = [.flexibleWidth, .flexibleHeight] // For supporting device rotation
+                
+                if let blurView = blurEffectView {
+                    view.addSubview(blurView)
+                    view.bringSubviewToFront(blurView)
+                }
         handPoseRequest.maximumHandCount = 1
         gestureProcessor.didChangeStateClosure = { [weak self] state in
             self?.handleGestureStateChange(state: state)
@@ -58,7 +100,7 @@ class CameraViewController: UIViewController {
         view.addGestureRecognizer(recognizer)
         initializeCheckersGameFrom2DArray()
         createSelectedCheckerView()
-        setDelegate()
+        Game.shared.updateScore()
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -91,13 +133,10 @@ class CameraViewController: UIViewController {
         if let checkerView = floatingCheckerView {
             view.addSubview(checkerView)
         }
+        
+        
     }
     
-    private func setDelegate() {
-        DispatchQueue.main.async {
-            Game.shared.delegate = self.chessBoardView
-        }
-    }
     
     
     private func updateFloatingCheckerPosition(midpoint: CGPoint) {
@@ -113,7 +152,6 @@ class CameraViewController: UIViewController {
         DispatchQueue.main.async {
             self.chessBoardView.deployCheckerOnBoard()
         }
-        
     }
     
     private func calculateBoardCoordinates() {
@@ -238,6 +276,28 @@ class CameraViewController: UIViewController {
     
     private func placeCheckerOnBoard(row: Int, column: Int) {
         Game.shared.placeCheckerAt(row: row, column: column)
+        Game.shared.updateScore()
+        scoreboardView.score = Game.shared.score
+        if Game.shared.state == .userWin {
+//            self.view.bringSubviewToFront(winningView!)
+            winningView.startFallingEmojisStaggered()
+            finishView.addTitle(title: "You win!")
+            finishView.setTitleVisibility(true)
+        }
+        else if Game.shared.state == .userLose {
+            self.view.bringSubviewToFront(lossingView!)
+            lossingView.startFallingEmojisStaggered()
+            finishView.addTitle(title: "You lost!")
+            finishView.setTitleVisibility(true)
+        }
+        
+        if Game.shared.score == 30 {
+//            Game.shared.resetGame()
+//            scoreboardView.score = Game.shared.score
+//            lossingView.startFallingEmojisStaggered()
+//            finishView.addTitle(title: "You lost!")
+//            finishView.setTitleVisibility(true)
+        }
     }
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
@@ -264,7 +324,9 @@ class CameraViewController: UIViewController {
                         Game.shared.selectedKind = Game.shared.board[thumbPosition.row][thumbPosition.column]
                         removeCheckerOnBoard(row: thumbPosition.row, column: thumbPosition.column)
                         isHolding = true
-                        Game.shared.state = .choice
+                        if Game.shared.state == .hint{
+                            Game.shared.state = .choice
+                        }
                         self.floatingCheckerView?.isHidden = false
                     }
                 }
@@ -311,7 +373,9 @@ class CameraViewController: UIViewController {
             evidenceBuffer.removeAll()
             isPinching = false
             isHolding = false
-            Game.shared.state = .hint
+            if Game.shared.state == .choice {
+                Game.shared.state = .hint
+            }
             tipsColor = .red
         }
         cameraView.showPoints([pointsPair.thumbTip, pointsPair.indexTip], color: tipsColor)
@@ -362,3 +426,5 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
 }
+
+

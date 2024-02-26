@@ -22,13 +22,20 @@ class ScoreboardView: UIView {
     }
     
     private func commonInit() {
-        // Initialize and configure the score label
         scoreLabel = UILabel()
         scoreLabel.translatesAutoresizingMaskIntoConstraints = false
         scoreLabel.textAlignment = .center
-        scoreLabel.font = UIFont.systemFont(ofSize: 24)
-        scoreLabel.textColor = .black
+        scoreLabel.font = UIFont(name: "ChalkboardSE-Bold", size: 50)
+        scoreLabel.textColor = .white
+        scoreLabel.layer.shadowColor = UIColor.black.cgColor
+        scoreLabel.layer.shadowOffset = CGSize(width: 2, height: 2)
+        scoreLabel.layer.shadowRadius = 2
+        scoreLabel.layer.shadowOpacity = 0.5
         addSubview(scoreLabel)
+        
+      
+        
+        
         
         // Constraints for scoreLabel
         NSLayoutConstraint.activate([
@@ -38,7 +45,7 @@ class ScoreboardView: UIView {
             scoreLabel.trailingAnchor.constraint(equalTo: trailingAnchor)
         ])
         
-        updateScoreDisplay() // Display initial score
+        updateScoreDisplay()
     }
     
     private func updateScoreDisplay() {
