@@ -10,4 +10,6 @@ import Foundation
 enum GameState {
     case choice
     case hint
+    case userWin
+    case userLose
 }

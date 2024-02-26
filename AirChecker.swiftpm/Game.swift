@@ -15,18 +15,49 @@ class Game {
     weak var delegate: GameDelegate?
     
     var board: [[Character]] = [[".", "#", ".", "#", ".", "#", ".", "#"],
-                               ["#", ".", "#", ".", "#", ".", "#", "."],
-                               [".", "#", ".", "#", ".", "#", ".", "#"],
-                               [".", ".", ".", ".", ".", ".", ".", "."],
-                               [".", ".", ".", ".", ".", ".", ".", "."],
-                               ["@", ".", "@", ".", "@", ".", "@", "."],
-                               [".", "@", ".", "@", ".", "@", ".", "@"],
-                               ["@", ".", "@", ".", "@", ".", "@", "."]]
-
+                                ["#", ".", "#", ".", "#", ".", "#", "."],
+                                [".", "#", ".", "#", ".", "#", ".", "#"],
+                                [".", ".", ".", ".", ".", ".", ".", "."],
+                                [".", ".", ".", ".", ".", ".", ".", "."],
+                                ["@", ".", "@", ".", "@", ".", "@", "."],
+                                [".", "@", ".", "@", ".", "@", ".", "@"],
+                                ["@", ".", "@", ".", "@", ".", "@", "."]]
+    
     var selected: Coordinate? = nil
     var selectedKind: Character? = nil
     
+    var score: Int = 0
+    
     private init() {}
+    
+    func updateScore(){
+        var tmp = 0
+        var computerNormalCheckers = 0
+        var computerKingCheckers = 0
+        var userNormalCheckers = 0
+        var userKingCheckers = 0
+        
+        for i in 0..<board.count {
+            for j in 0..<board[i].count {
+                switch(board[i][j]){
+                case "@":
+                    userNormalCheckers += 1
+                case "#":
+                    computerNormalCheckers += 1
+                case "B":
+                    computerKingCheckers += 1
+                case "W":
+                    userKingCheckers += 1
+                default:
+                    continue
+                }
+            }
+        }
+        let capturedCheckers = 12 - (computerNormalCheckers + computerKingCheckers)
+        tmp += capturedCheckers * 30
+        tmp += userKingCheckers * 100
+        score = tmp
+    }
     
     func removeCheckerAt(row: Int, column: Int) {
         if board[row][column] != "." {
@@ -57,7 +88,7 @@ class Game {
     }
     
     func placeCheckerAt(row: Int, column: Int) {
-  
+        
         guard Game.shared.selected != nil else {
             return
         }
@@ -84,6 +115,41 @@ class Game {
         selected = nil
         selectedKind = nil
         computerMove()
+        updateScore()
+        switch(judgeState()) {
+        case "U":
+            state = .userWin
+        case "C":
+            state = .userLose
+        default:
+            break
+        }
+        print(score)
+    }
+    
+    func judgeState() -> Character{
+        var userPieces = 0
+        var computerPieces = 0
+        
+        for i in 0..<board.count {
+            for j in 0..<board[i].count {
+                if isUser(row: i, col: j) {
+                    userPieces += 1
+                }
+                if isComputer(row: i, col: j) {
+                    computerPieces += 1
+                }
+            }
+        }
+        if userPieces == 0 {
+            return "C"
+        }
+        else if computerPieces == 0 {
+            return "U"
+        }
+        else{
+            return "N"
+        }
     }
     
     func isUser(row: Int, col: Int) -> Bool{
@@ -469,4 +535,24 @@ class Game {
         return res
     }
     
+}
+
+extension Game {
+    func resetGame() {
+        // Reset or initialize game properties to their default values
+        state = .choice
+        // Reset other properties as needed, e.g., board, score, etc.
+        board = [[".", "#", ".", "#", ".", "#", ".", "#"],
+                 ["#", ".", "#", ".", "#", ".", "#", "."],
+                 [".", "#", ".", "#", ".", "#", ".", "#"],
+                 [".", ".", ".", ".", ".", ".", ".", "."],
+                 [".", ".", ".", ".", ".", ".", ".", "."],
+                 ["@", ".", "@", ".", "@", ".", "@", "."],
+                 [".", "@", ".", "@", ".", "@", ".", "@"],
+                 ["@", ".", "@", ".", "@", ".", "@", "."]]
+        score = 0
+        selected = nil
+        selectedKind = nil
+        // Notify delegate if needed, etc.
+    }
 }
