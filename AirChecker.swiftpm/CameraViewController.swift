@@ -33,13 +33,16 @@ class CameraViewController: UIViewController {
 
     private var finishView: FinishView!
     
+    private var instructionLabel: UILabel!
+
+    
     override func loadView() {
         view = CameraView()
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        if chessBoardView == nil { // Ensure it's only set up once
+        if chessBoardView == nil {
             let boardSize = min(view.bounds.width, view.bounds.height) * 0.8
             chessBoardView = ChessBoardView(frame: CGRect(x:0, y:0, width:boardSize, height:boardSize))
             chessBoardView.center = view.center
@@ -49,12 +52,25 @@ class CameraViewController: UIViewController {
         }
         if titleView == nil {
             let availableSpace = chessBoardView.frame.minY - view.safeAreaInsets.top
-                   let titleViewHeight: CGFloat = 50 // Or whatever height your TitleView should be
+                   let titleViewHeight: CGFloat = 50
                    let titleViewYPosition = (availableSpace - titleViewHeight) / 2 + view.safeAreaInsets.top
 
                    titleView = TitleView(frame: CGRect(x: 0, y: titleViewYPosition, width: view.bounds.width, height: titleViewHeight))
                    view.addSubview(titleView)
                    view.bringSubviewToFront(titleView)
+            }
+        if instructionLabel == nil {
+                let labelHeight: CGFloat = 20
+                let labelYPosition = titleView.frame.maxY + 10
+                
+                instructionLabel = UILabel(frame: CGRect(x: 20, y: labelYPosition, width: view.bounds.width - 40, height: labelHeight))
+                instructionLabel.text = "Pose your hands, pinch a piece, play"
+                instructionLabel.textAlignment = .center
+                instructionLabel.textColor = .white
+                instructionLabel.font = UIFont(name: "Chalkboard", size: 17)
+
+            
+                view.addSubview(instructionLabel)
             }
         if scoreboardView == nil {
             scoreboardView = ScoreboardView(frame: CGRect(x: 20, y: chessBoardView.frame.maxY + 10, width: view.bounds.width - 40, height: 50))
@@ -161,11 +177,11 @@ class CameraViewController: UIViewController {
         let topLeftCornerY = chessBoardView.center.y - (chessBoardSize / 2)
         
         for i in 0..<8 {
-            let start = topLeftCornerY + CGFloat(i) * squareSize // For rows
+            let start = topLeftCornerY + CGFloat(i) * squareSize 
             let end = start + squareSize
             rowRanges.append((start, end))
             
-            let columnStart = topLeftCornerX + CGFloat(i) * squareSize // For columns
+            let columnStart = topLeftCornerX + CGFloat(i) * squareSize
             let columnEnd = columnStart + squareSize
             columnRanges.append((columnStart, columnEnd))
         }
