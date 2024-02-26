@@ -29,13 +29,9 @@ class CameraViewController: UIViewController {
     private var scoreboardView: ScoreboardView!
     private var winningView: WinningView!
     private var lossingView: LossingView!
+    private var titleView: TitleView!
 
     private var finishView: FinishView!
-//    private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
-    
-
-
-    
     
     override func loadView() {
         view = CameraView()
@@ -51,6 +47,15 @@ class CameraViewController: UIViewController {
             view.bringSubviewToFront(chessBoardView)
             calculateBoardCoordinates()
         }
+        if titleView == nil {
+            let availableSpace = chessBoardView.frame.minY - view.safeAreaInsets.top
+                   let titleViewHeight: CGFloat = 50 // Or whatever height your TitleView should be
+                   let titleViewYPosition = (availableSpace - titleViewHeight) / 2 + view.safeAreaInsets.top
+
+                   titleView = TitleView(frame: CGRect(x: 0, y: titleViewYPosition, width: view.bounds.width, height: titleViewHeight))
+                   view.addSubview(titleView)
+                   view.bringSubviewToFront(titleView)
+            }
         if scoreboardView == nil {
             scoreboardView = ScoreboardView(frame: CGRect(x: 20, y: chessBoardView.frame.maxY + 10, width: view.bounds.width - 40, height: 50))
             view.addSubview(scoreboardView)
@@ -69,7 +74,7 @@ class CameraViewController: UIViewController {
         }
         
         if finishView == nil {
-            let resetButtonFrame = CGRect(x: view.bounds.maxX - 100, y: view.bounds.maxY - 150, width: 80, height: 80)
+            let resetButtonFrame = CGRect(x: view.bounds.maxX - 100, y: view.bounds.minY + 40, width: 80, height: 80)
             finishView = FinishView(frame: view.bounds, imageFrame: resetButtonFrame)
             view.addSubview(finishView)
             view.bringSubviewToFront(finishView)
@@ -200,7 +205,7 @@ class CameraViewController: UIViewController {
     }
     
     private func bothPointsInActiveArea(indexPoint: CGPoint, thumbPoint: CGPoint) -> Bool {
-        let gestureActiveArea = CGRect(x: view.bounds.maxX - 100, y: view.bounds.maxY - 150, width: 80, height: 80)
+        let gestureActiveArea = CGRect(x: view.bounds.maxX - 100, y: view.bounds.minY + 40, width: 80, height: 80)
             return gestureActiveArea.contains(indexPoint) && gestureActiveArea.contains(thumbPoint)
     }
 
@@ -275,7 +280,6 @@ class CameraViewController: UIViewController {
         Game.shared.updateScore()
         scoreboardView.score = Game.shared.score
         if Game.shared.state == .userWin {
-//            self.view.bringSubviewToFront(winningView!)
             winningView.startFallingEmojisStaggered()
             finishView.addTitle(title: "You win!")
             finishView.setTitleVisibility(true)
