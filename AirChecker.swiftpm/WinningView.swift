@@ -6,6 +6,8 @@ class WinningView: UIView {
     private var animator: UIDynamicAnimator!
     private var gravity: UIGravityBehavior!
     private var collision: UICollisionBehavior!
+    private var dropTimer: Timer?
+
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -18,10 +20,16 @@ class WinningView: UIView {
     }
     
     func startFallingEmojisStaggered() {
-        // Using DispatchQueue is not necessary for Timer.scheduledTimer
-        Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] timer in
+        dropTimer?.invalidate()
+               
+        dropTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] timer in
             self?.dropEmoji()
         }
+    }
+    
+    func stopFallingEmojis() {
+        dropTimer?.invalidate() 
+        dropTimer = nil
     }
 
     private func dropEmoji() {

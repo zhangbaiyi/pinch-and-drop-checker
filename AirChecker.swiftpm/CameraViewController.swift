@@ -31,7 +31,10 @@ class CameraViewController: UIViewController {
     private var lossingView: LossingView!
 
     private var finishView: FinishView!
-    private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
+//    private var movableCheckers: [[Int]] = [[5, 0],[5,2],[5, 4],[5,6]]
+    
+
+
     
     
     override func loadView() {
@@ -196,6 +199,11 @@ class CameraViewController: UIViewController {
         cameraFeedSession = session
     }
     
+    private func bothPointsInActiveArea(indexPoint: CGPoint, thumbPoint: CGPoint) -> Bool {
+        let gestureActiveArea = CGRect(x: view.bounds.maxX - 100, y: view.bounds.maxY - 150, width: 80, height: 80)
+            return gestureActiveArea.contains(indexPoint) && gestureActiveArea.contains(thumbPoint)
+    }
+
     private func findPosition(for point: CGPoint) -> (row: Int, column: Int)? {
         let rowIndex = rowRanges.firstIndex(where: { $0.start <= point.y && point.y < $0.end })
         let columnIndex = columnRanges.firstIndex(where: { $0.start <= point.x && point.x < $0.end })
@@ -278,14 +286,6 @@ class CameraViewController: UIViewController {
             finishView.addTitle(title: "You lost!")
             finishView.setTitleVisibility(true)
         }
-        
-        if Game.shared.score == 30 {
-//            Game.shared.resetGame()
-//            scoreboardView.score = Game.shared.score
-//            lossingView.startFallingEmojisStaggered()
-//            finishView.addTitle(title: "You lost!")
-//            finishView.setTitleVisibility(true)
-        }
     }
     
     private func handleGestureStateChange(state: HandGestureProcessor.State) {
@@ -301,6 +301,16 @@ class CameraViewController: UIViewController {
             tipsColor = .green
             isPinching = true
             if previousState == .possiblePinch {
+                
+                if bothPointsInActiveArea(indexPoint: pointsPair.indexTip, thumbPoint: pointsPair.thumbTip){
+                    Game.shared.resetGame()
+                    scoreboardView.score = Game.shared.score
+                    winningView.stopFallingEmojis()
+                    lossingView.stopFallingEmojis()
+                    finishView.setTitleVisibility(false)
+                    chessBoardView.deployCheckerOnBoard()
+                }
+                
                 print("Previous State is possible pinched")
                 if let thumbPosition = self.findPosition(for: pointsPair.thumbTip),
                    let indexPosition = self.findPosition(for: pointsPair.indexTip),
