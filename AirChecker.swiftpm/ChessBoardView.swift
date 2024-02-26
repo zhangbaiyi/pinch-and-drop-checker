@@ -44,6 +44,24 @@ class ChessBoardView: UIView {
         }
     }
     
+//    func removeChecker(at row: Int, column: Int) {
+//        // Calculate the tag of the checker to find it among subviews
+//        let checkerTag = row * 8 + column
+//        
+//        // Attempt to find the checker view by its tag
+//        if let checkerToRemove = self.subviews.first(where: { $0.tag == checkerTag }) {
+//            // Animate the checker fading out before removing it
+//            UIView.animate(withDuration: 0.3, animations: {
+//                checkerToRemove.alpha = 0 // Fade out
+//            }) { (finished) in
+//                if finished {
+//                    // After the animation completes, remove the checker from the view
+//                    checkerToRemove.removeFromSuperview()
+//                }
+//            }
+//        }
+//    }
+    
     func removeGlowingCircleHintsFromView() {
         self.subviews.forEach { subview in
             if subview is Circle {
@@ -54,12 +72,10 @@ class ChessBoardView: UIView {
 
     
     func deployCheckerOnBoard() {
+        print("Deploy function called ")
         removeAllCheckersFromView()
         removeGlowingCircleHintsFromView()
         let board = Game.shared.board
-        print("Holding piece? ", Game.shared.state)
-        
-        let movableCheckers = Game.shared.findMovableCheckers()
 
         
         for (rowIndex, row) in board.enumerated() {
@@ -70,17 +86,20 @@ class ChessBoardView: UIView {
                     self.addChecker(at: rowIndex, column: columnIndex, color: checkerColor, isKing: false)
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
                     if Game.shared.state == .choice {
+                        let movableCheckers = Game.shared.findMovableCheckers()
+
                         if movableCheckers.contains(coordinate) {
                             addGlowEffect(toCheckerAt: rowIndex, column: columnIndex)
                         }
                     }
                 case "B", "W":
-                    print("Should be king")
                     let checkerColor: Checker.Color = cell == "B" ? .black : .white
                     self.addChecker(at: rowIndex, column: columnIndex, color: checkerColor, isKing: true)
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
                     
                     if Game.shared.state == .choice {
+                        let movableCheckers = Game.shared.findMovableCheckers()
+
                         if movableCheckers.contains(coordinate) {
                             addGlowEffect(toCheckerAt: rowIndex, column: columnIndex)
                         }
@@ -89,7 +108,6 @@ class ChessBoardView: UIView {
                     let coordinate = Coordinate(row: rowIndex, col: columnIndex)
                     if Game.shared.state == .hint {
                         let possiblePlaces = Game.shared.findPossibleMoveDestination()
-                        print(possiblePlaces)
                         if possiblePlaces.contains(coordinate) {
                             addGlowingCircle(at: rowIndex, column: columnIndex)
                         }
@@ -131,4 +149,32 @@ class ChessBoardView: UIView {
             }
         }
     }
+    
+  
+}
+
+
+extension ChessBoardView: GameDelegate {
+    func removeChecker(row: Int, col: Int, completion: @escaping () -> Void) {
+        
+        DispatchQueue.main.async {
+            let checkerTag = row * 8 + col
+            print("animation playing")
+            // Attempt to find the checker view by its tag
+            if let checkerToRemove = self.subviews.first(where: { $0.tag == checkerTag }) {
+                // Animate the checker fading out before removing it
+                UIView.animate(withDuration: 0.5, animations: {
+                    checkerToRemove.alpha = 0 // Fade out
+                }) { (finished) in
+                    if finished {
+                        // After the animation completes, remove the checker from the view
+                        checkerToRemove.removeFromSuperview()
+                    }
+                }
+            }
+            completion()
+        }
+    }
+    
+    
 }
