@@ -7,7 +7,6 @@ class FinishView: UIView {
     init(frame: CGRect, imageFrame: CGRect) {
         super.init(frame: frame)
         imageView = UIImageView(frame: imageFrame)
-        // Change the color of the image to blue
         if let image = UIImage(systemName: "arrow.circlepath")?.withTintColor(.white, renderingMode: .alwaysOriginal) {
             imageView.image = image
         }

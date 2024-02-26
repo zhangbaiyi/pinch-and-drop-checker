@@ -56,7 +56,7 @@ class LossingView: UIView {
         animator = UIDynamicAnimator(referenceView: self)
         
         gravity = UIGravityBehavior()
-        gravity.magnitude = 0.8 // Adjust for different gravity effects
+        gravity.magnitude = 0.8 
         animator.addBehavior(gravity)
         
         collision = UICollisionBehavior()

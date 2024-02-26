@@ -33,11 +33,6 @@ class ScoreboardView: UIView {
         scoreLabel.layer.shadowOpacity = 0.5
         addSubview(scoreLabel)
         
-      
-        
-        
-        
-        // Constraints for scoreLabel
         NSLayoutConstraint.activate([
             scoreLabel.topAnchor.constraint(equalTo: topAnchor),
             scoreLabel.bottomAnchor.constraint(equalTo: bottomAnchor),

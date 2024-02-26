@@ -42,13 +42,13 @@ class CameraView: UIView {
     }
 
     private func setupOverlay() {
-        let blurEffect = UIBlurEffect(style: .systemMaterial) // Choose the desired style
+        let blurEffect = UIBlurEffect(style: .systemMaterial) 
         let blurEffectView = UIVisualEffectView(effect: blurEffect)
         blurEffectView.frame = self.bounds
         blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         
-        addSubview(blurEffectView) // Add the blur effect view as a subview
-        self.blurEffectView = blurEffectView // Keep a reference to the blur effect view
+        addSubview(blurEffectView)
+        self.blurEffectView = blurEffectView
         
         previewLayer.addSublayer(overlayLayer)
     }

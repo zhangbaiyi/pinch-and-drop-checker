@@ -50,16 +50,12 @@ class HandGestureProcessor {
         lastProcessedPointsPair = pointsPair
         let distance = pointsPair.indexTip.distance(from: pointsPair.thumbTip)
         if distance < pinchMaxDistance {
-            // Keep accumulating evidence for pinch state.
             pinchEvidenceCounter += 1
             apartEvidenceCounter = 0
-            // Set new state based on evidence amount.
             state = (pinchEvidenceCounter >= evidenceCounterStateTrigger) ? .pinched : .possiblePinch
         } else {
-            // Keep accumulating evidence for apart state.
             apartEvidenceCounter += 1
             pinchEvidenceCounter = 0
-            // Set new state based on evidence amount.
             state = (apartEvidenceCounter >= evidenceCounterStateTrigger) ? .apart : .possibleApart
         }
     }

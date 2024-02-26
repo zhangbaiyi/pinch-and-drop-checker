@@ -378,7 +378,7 @@ class Game {
     private func findMovableCheckersForComputer() -> Set<Coordinate> {
         var movable: Set<Coordinate> = []
         var jumpers: Set<Coordinate> = []
-        let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)] // Directions for jumps and moves
+        let directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         let direction_normal = [(1, -1), (1, 1)]
         
         
@@ -539,9 +539,7 @@ class Game {
 
 extension Game {
     func resetGame() {
-        // Reset or initialize game properties to their default values
         state = .choice
-        // Reset other properties as needed, e.g., board, score, etc.
         board = [[".", "#", ".", "#", ".", "#", ".", "#"],
                  ["#", ".", "#", ".", "#", ".", "#", "."],
                  [".", "#", ".", "#", ".", "#", ".", "#"],
@@ -553,6 +551,5 @@ extension Game {
         score = 0
         selected = nil
         selectedKind = nil
-        // Notify delegate if needed, etc.
     }
 }
