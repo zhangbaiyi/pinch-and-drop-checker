@@ -24,7 +24,6 @@ class CameraViewController: UIViewController {
     private var previousState: HandGestureProcessor.State = .unknown
     
     private var cameraView: CameraView { view as! CameraView }
-    private var blurEffectView: UIVisualEffectView?
 
     private var chessBoardView: ChessBoardView!
     private var scoreboardView: ScoreboardView!
@@ -41,8 +40,6 @@ class CameraViewController: UIViewController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        blurEffectView?.frame = view.bounds // Adjust if your camera view does not cover the entire screen
-
         if chessBoardView == nil { // Ensure it's only set up once
             let boardSize = min(view.bounds.width, view.bounds.height) * 0.8
             chessBoardView = ChessBoardView(frame: CGRect(x:0, y:0, width:boardSize, height:boardSize))
@@ -81,15 +78,6 @@ class CameraViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        let blurEffect = UIBlurEffect(style: .regular) // Choose the style that fits your needs
-                blurEffectView = UIVisualEffectView(effect: blurEffect)
-                blurEffectView?.frame = view.bounds // Assuming the camera view covers the entire screen
-                blurEffectView?.autoresizingMask = [.flexibleWidth, .flexibleHeight] // For supporting device rotation
-                
-                if let blurView = blurEffectView {
-                    view.addSubview(blurView)
-                    view.bringSubviewToFront(blurView)
-                }
         handPoseRequest.maximumHandCount = 1
         gestureProcessor.didChangeStateClosure = { [weak self] state in
             self?.handleGestureStateChange(state: state)
