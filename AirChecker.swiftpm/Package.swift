@@ -33,7 +33,7 @@ let package = Package(
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
             capabilities: [
-                .camera(purposeString: "Unknown Usage Description")
+                .camera(purposeString: "Please allow camera permission to play a checker game by your fingers in the air!")
             ],
             appCategory: .boardGames
         )

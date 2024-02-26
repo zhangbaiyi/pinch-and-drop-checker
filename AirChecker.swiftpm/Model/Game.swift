@@ -12,7 +12,6 @@ class Game {
     static let shared = Game()
     
     var state: GameState = .choice
-    weak var delegate: GameDelegate?
     
     var board: [[Character]] = [[".", "#", ".", "#", ".", "#", ".", "#"],
                                 ["#", ".", "#", ".", "#", ".", "#", "."],
