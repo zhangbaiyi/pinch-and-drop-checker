@@ -13,12 +13,14 @@ struct MyApp: App {
 }
 
 func tidyCatalystWindow() {
-    #if targetEnvironment(macCatalyst)
-    UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.forEach { windowScene in
-        // Set both the minimum and maximum sizes to the same value to prevent resizing
-        let fixedSize = CGSize(width: 800, height: 800)
-        windowScene.sizeRestrictions?.minimumSize = fixedSize
-        windowScene.sizeRestrictions?.maximumSize = fixedSize
-    }
-    #endif
+#if targetEnvironment(macCatalyst)
+    UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        .forEach { ws in
+            ws.sizeRestrictions?.minimumSize = CGSize(width: 800, height:1200)
+            ws.sizeRestrictions?.maximumSize = CGSize(width: 800, height: 1200)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                ws.sizeRestrictions?.maximumSize = CGSize(width: 9000, height: 9000)
+            }
+        }
+#endif
 }
